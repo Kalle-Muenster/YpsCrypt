@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "YpsTests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

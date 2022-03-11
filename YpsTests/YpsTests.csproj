@@ -1,0 +1,90 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <ApplicationIcon>obstacle.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64;x86</Platforms>
+    <PackageId>Yps.Crypt</PackageId>
+    <Version>0.0.0.1</Version>
+    <Authors>YpsCryps</Authors>
+    <Product>YpsCryps</Product>
+    <Company />
+    <Description>Encyption/Decryption  Library</Description>
+    <PackageIcon>YpsCrypt.png</PackageIcon>
+    <PackageIconUrl />
+    <PackageTags>Data, Encryption, Base64Streams</PackageTags>
+    <PackageReleaseNotes>Nope</PackageReleaseNotes>
+    <NeutralLanguage>en-001</NeutralLanguage>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Nullable>warnings</Nullable>
+    <DebugType>full</DebugType>
+    <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
+    <AssemblyVersion>0.0.0.1</AssemblyVersion>
+    <StartupObject></StartupObject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <OutputPath>..\bin\tst\x64\Debug</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <OutputPath>..\bin\tst\x86\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <OutputPath>..\bin\tst\x86\Release</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>..\bin\tst\x64\Release</OutputPath>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="linkage\**" />
+    <EmbeddedResource Remove="linkage\**" />
+    <None Remove="linkage\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Consola">
+      <HintPath>..\bin\x64\Debug\Consola.dll</HintPath>
+    </Reference>
+    <Reference Include="Int24Types">
+      <HintPath>..\bin\x64\Debug\Int24Types.dll</HintPath>
+    </Reference>
+    <Reference Include="test_int24_dotnet_dll">
+      <HintPath>..\bin\x64\Debug\test_int24_dotnet_dll.dll</HintPath>
+    </Reference>
+    <Reference Include="YpsCryps">
+      <HintPath>..\bin\x64\Debug\YpsCryps.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="YpsCrypt.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
