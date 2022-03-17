@@ -65,6 +65,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\YpssCryps\YpssCryps.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Consola">
       <HintPath>..\bin\x64\Debug\Consola.dll</HintPath>
     </Reference>
@@ -72,10 +76,7 @@
       <HintPath>..\bin\x64\Debug\Int24Types.dll</HintPath>
     </Reference>
     <Reference Include="test_int24_dotnet_dll">
-      <HintPath>..\bin\x64\Debug\test_int24_dotnet_dll.dll</HintPath>
-    </Reference>
-    <Reference Include="YpsCryps">
-      <HintPath>..\bin\x64\Debug\YpsCryps.dll</HintPath>
+      <HintPath>..\..\Int24Types\bin\core5\test\x64\Debug\net5.0\test_int24_dotnet_dll.dll</HintPath>
     </Reference>
   </ItemGroup>
 

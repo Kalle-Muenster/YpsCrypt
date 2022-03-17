@@ -1,11 +1,29 @@
 {
   "version": 3,
   "targets": {
-    "net5.0": {}
+    "net5.0": {
+      "YpsCryps/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/YpsCryps.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/YpsCryps.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "YpsCryps/1.0.0": {
+      "type": "project",
+      "path": "../YpssCryps/YpssCryps.vcxproj",
+      "msbuildProject": "../YpssCryps/YpssCryps.vcxproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net5.0": []
+    "net5.0": [
+      "YpsCryps >= 1.0.0"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\kalle\\.nuget\\packages\\": {},
@@ -38,7 +56,11 @@
       "frameworks": {
         "net5.0": {
           "targetAlias": "net5.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj": {
+              "projectPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj"
+            }
+          }
         }
       },
       "warningProperties": {

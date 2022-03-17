@@ -102,7 +102,9 @@ Yps::CryptKey::~CryptKey(void)
 bool
 Yps::CryptKey::IsValid(void)
 {
-    return (bool)crypt64_isValidKey( static_cast<K64*>(k.ToPointer()) );
+    bool valid = (bool)crypt64_isValidKey( static_cast<K64*>(k.ToPointer()) );
+    if ( valid ) valid = Hash > 0;
+    return valid;
 }
 
 void

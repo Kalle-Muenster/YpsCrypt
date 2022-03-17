@@ -4,6 +4,21 @@
     "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\YpsTests.csproj": {}
   },
   "projects": {
+    "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj": {
+      "restore": {
+        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj",
+        "projectName": "YpsCryps",
+        "projectPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj",
+        "frameworks": {
+          "native": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "native": {}
+      }
+    },
     "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\YpsTests.csproj": {
       "version": "0.0.0.1",
       "restore": {
@@ -31,7 +46,11 @@
         "frameworks": {
           "net5.0": {
             "targetAlias": "net5.0",
-            "projectReferences": {}
+            "projectReferences": {
+              "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj": {
+                "projectPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpssCryps\\YpssCryps.vcxproj"
+              }
+            }
           }
         },
         "warningProperties": {

@@ -276,13 +276,13 @@ namespace Yps
                 ++dat.U24Idx; 
                 CryptFrame clear = new CryptFrame( outerer.Current );
                 // parse each frames 3 bytes of clear frame for some search text
-                // and break the loop as soon parser encounteres the search verb 
+                // and break the loop as soon parser encounteres the search text 
             }
 
-            // then return so obtained UInt24 positional index which hould point
+            // then return so obtained UInt24 positional index which should point
             // position where that searched clear text portion begins within the
-            // cryptic data which was encountered during the search and decrypt
-            // data this time beginning at that position 
+            // cryptic data. then begin decrypting at that position to verify the
+            // correct position was found within the iteration loop before
 
         }
 
@@ -293,7 +293,7 @@ namespace Yps
             printVersionNumber();
 
             password = setTestData( "YpsCryptTest", 8374368578003016900u, "This is test data which consists from a System.String which contains 90 characters of text",
-                                    "WiKQAJuqApQEeb64wztdjLidjLirbsArczItRzMaRPtd2Paa2PlZjPe1R5Bab4OyGCitcmATjpIeGCT+R5OdGvjaRPtd2Paa2PlZRzmdG4Ba/+Ea2Pttjvm7RzwLjLiyb3irbstr=" );
+                                    "WiKQAJuqApQEeb64wztdjLidjLirbsArczItRzMaRPtd2Paa2PlZjPe1R5Bab4OyGCitcmATjpIeGCT+R5OdGvjaRPtd2Paa2PlZRzmdG4Ba/+Ea2Pttjvm7RzwLjLiyb3irbstr====" );
             cryptingBuffer();
 
             base64coding();
