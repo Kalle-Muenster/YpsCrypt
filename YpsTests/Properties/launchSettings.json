@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "YpsTests": {
+    "YpsCryps": {
       "commandName": "Project",
       "nativeDebugging": true
     }

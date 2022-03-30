@@ -2,13 +2,15 @@
 
 #include "CryptHelper.hpp"
 #include "CryptBuffer.hpp"
-#include "CrypsApi.hpp"
+#include "CryptApi.hpp"
 #include <settings.h>
 #include <.crypt64.h>
 
 using namespace Stepflow;
 
-namespace Yps{
+namespace Yps
+{
+
 ref class Cleansener
     : public IDisposable
 {
@@ -43,7 +45,6 @@ Yps::Cleansener::Weggeloescht( bool sollwech )
             shuttingdown = 2;
         } else {
             junk_cycle();
-            gcnew Cleansener();
         }
     }
 }
@@ -55,17 +56,17 @@ Yps::Cleansener::Weggeloescht( bool sollwech )
 
 Yps::CryptKey::CryptKey( const char* phrase )
 {
-    k = IntPtr( crypt64_createKeyFromPass( phrase ) );
+    if ( phrase != NULL ) if ( phrase[0] != '\0' ) k = IntPtr( crypt64_createKeyFromPass( phrase ) );
 }
 
 Yps::CryptKey::CryptKey( ulong hash )
 {
-    k = IntPtr( crypt64_createKeyFromHash( hash ) );
+    if ( hash > 0 ) k = IntPtr( crypt64_createKeyFromHash( hash ) );
 }
 
 ulong
 Yps::CryptKey::Hash::get( void ) {
-    return (static_cast<K64*>(k.ToPointer()))->pass.value;
+    return (static_cast<K64*>( k.ToPointer() ))->pass.value;
 }
 
 Yps::CryptBuffer^
@@ -102,8 +103,9 @@ Yps::CryptKey::~CryptKey(void)
 bool
 Yps::CryptKey::IsValid(void)
 {
-    bool valid = (bool)crypt64_isValidKey( static_cast<K64*>(k.ToPointer()) );
+    bool valid = k != IntPtr::Zero;
     if ( valid ) valid = Hash > 0;
+    if ( valid ) valid = (bool)crypt64_isValidKey( static_cast<K64*>(k.ToPointer()) );  
     return valid;
 }
 
@@ -129,41 +131,53 @@ Yps::CryptKey::ToPointer(void)
 }
 
 bool
-Yps::CryptKey::Equals( String^ phrase ) {
+Yps::CryptKey::Equals( String^ phrase )
+{
     if (phrase == nullptr) return false;
     if (phrase == String::Empty) return false;
     return static_cast<K64*>( k.ToPointer() )->pass.value
-	    == CryptApi::CalculateHash( phrase );
+	    == Crypt::CalculateHash( phrase );
 }
 
+String^
+Yps::CryptKey::Encrypt( String^ string )
+{
+    return IsValid() ? Crypt::EncryptString( this, string ) : string;
+}
+
+String^
+Yps::CryptKey::Decrypt( String^ crypts )
+{
+    return IsValid() ? Crypt::DecryptString( this, crypts ) : crypts;
+}
 
 //////////////////////////////////
 /// CryptApi
 
 
 uint
-Yps::CryptApi::GetVersionNumber()
+Yps::Crypt::GetVersionNumber()
 {
     return YpsCryptVersionNumber;
 }
 
 System::String^
-Yps::CryptApi::GetVersionString()
+Yps::Crypt::GetVersionString()
 {
     return YpsCryptVersionString;
 }
 
 
-static Yps::CryptApi::CryptApi( void )
+static Yps::Crypt::Crypt( void )
 {
-    Yps::CryptApi::error = Yps::Error::NoError;
+    Yps::Crypt::error = Yps::Error::NoError;
     runs = false;
-    Yps::CryptApi::Init( true );
+    Yps::Crypt::Init( true );
 }
 
 
 Yps::CryptKey^
-Yps::CryptApi::CreateKey( String^ phrase )
+Yps::Crypt::CreateKey( String^ phrase )
 {
     array<byte>^ pd = System::Text::Encoding::Default->GetBytes( phrase );
     pin_ptr<byte> pt( &pd[0] );
@@ -172,19 +186,19 @@ Yps::CryptApi::CreateKey( String^ phrase )
 
 
 Yps::CryptKey^
-Yps::CryptApi::CreateKey( ulong hash )
+Yps::Crypt::CreateKey( ulong hash )
 {
     return gcnew CryptKey( hash );
 }
 
 void
-Yps::CryptApi::Init( bool init )
+Yps::Crypt::Init( bool init )
 {
     if( init && (!runs) ) {
         runs = init;
         crypt64_Initialize( true );
         if( wasError() ) {
-            CryptApi::error = Yps::Error( getErrorCode(), getError() );
+            Crypt::error = Yps::Error( getErrorCode(), getError() );
         } gcnew Cleansener();
     } else if ( (!init) && runs ) {
         runs = init;
@@ -193,45 +207,51 @@ Yps::CryptApi::Init( bool init )
     }
 }
 
+Yps::Error
+Yps::Crypt::Error::get( void )
+{
+    return error;
+}
+
 ulong
-Yps::CryptApi::CalculateHash( array<byte>^ data )
+Yps::Crypt::CalculateHash( array<byte>^ data )
 {
     pin_ptr<byte> dat( &data[0] );
     return crypt64_calculateHashValue( dat, data->Length );
 }
 
 ulong
-Yps::CryptApi::CalculateHash( String^ string )
+Yps::Crypt::CalculateHash( String^ string )
 {
     return CalculateHash( Encoding::Default->GetBytes( string ) );
 }
 
-bool Yps::CryptApi::check( uint size )
+bool Yps::Crypt::check( uint size )
 {
     if ( wasError() ) {
         fourCC code = getErrorCode();
         switch (code) {
-        case 7955819: CryptApi::error = Yps::Error((int)code, getError()); break;
-        case 7894115: CryptApi::error = Yps::Error((int)code, getError()); break;
-        case 7498084: CryptApi::error = Yps::Error((int)code, getError()); break;
-        case 1953066601: CryptApi::error = Yps::Error((int)code, getError()); break;
-        case BINARY: CryptApi::error = Yps::Error((int)code, getError()); break;
-        case BASE64: CryptApi::error = Yps::Error((int)code, getError()); break;
-        case 4605510: CryptApi::error = Yps::Error((int)code, getError()); break;
-        default: CryptApi::error = Yps::Error((int)code, getError(), size); break;
+        case 7955819: Crypt::error = Yps::Error((int)code, getError()); break;
+        case 7894115: Crypt::error = Yps::Error((int)code, getError()); break;
+        case 7498084: Crypt::error = Yps::Error((int)code, getError()); break;
+        case 1953066601: Crypt::error = Yps::Error((int)code, getError()); break;
+        case BINARY: Crypt::error = Yps::Error((int)code, getError()); break;
+        case BASE64: Crypt::error = Yps::Error((int)code, getError()); break;
+        case 4605510: Crypt::error = Yps::Error((int)code, getError()); break;
+        default: Crypt::error = Yps::Error((int)code, getError(), size); break;
         } clearAllErrors();
         if ( size > 0 ) return false;
-    } return CryptApi::error;
+    } return Crypt::error;
 }
 
-bool Yps::CryptApi::fail( void )
+bool Yps::Crypt::fail( void )
 {
-    if (!wasError()) CryptApi::error = Yps::Error::NoError;
-    return CryptApi::error;
+    if (!wasError()) Crypt::error = Yps::Error::NoError;
+    return Crypt::error;
 }
 
 generic<class T> String^
-Yps::CryptApi::Encrypt( CryptKey^ key, array<T>^ Src )
+Yps::Crypt::Encrypt( CryptKey^ key, array<T>^ Src )
 {
     if (fail()) return nullptr;
     const uint size_inp = Src->Length * sizeof(T);
@@ -252,7 +272,7 @@ Yps::CryptApi::Encrypt( CryptKey^ key, array<T>^ Src )
 }
 
 generic<class T> array<T>^
-Yps::CryptApi::Decrypt( CryptKey^ key, String^ cryptisch )
+Yps::Crypt::Decrypt( CryptKey^ key, String^ cryptisch )
 {
     if ( fail() ) return nullptr;
     const int size_enc = cryptisch->Length;
@@ -273,7 +293,7 @@ Yps::CryptApi::Decrypt( CryptKey^ key, String^ cryptisch )
 }
 
 generic<class T> array<T>^
-Yps::CryptApi::BinaryEncrypt( CryptKey^ key, array<T>^ Src )
+Yps::Crypt::BinaryEncrypt( CryptKey^ key, array<T>^ Src )
 {
     if( fail() ) return nullptr;
     const int size_src = Src->Length * sizeof(T);
@@ -288,7 +308,7 @@ Yps::CryptApi::BinaryEncrypt( CryptKey^ key, array<T>^ Src )
 }
 
 generic<class T> array<T>^
-Yps::CryptApi::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
+Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
 {
     if( fail() ) return nullptr;
     const int size_src = Src->Length * sizeof(T);
@@ -312,19 +332,19 @@ Yps::CryptApi::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
 }
 
 System::UInt32
-Yps::CryptApi::EncryptFrame64( CryptKey^ key, UInt24 frame )
+Yps::Crypt::EncryptFrame64( CryptKey^ key, UInt24 frame )
 {
     return crypt64_encryptFrame( static_cast<K64*>(key->ToPointer()), reinterpret_cast<k64Chunk&>(frame) ).u32;
 }
 
 UInt24
-Yps::CryptApi::DecryptFrame64( CryptKey^ key, UInt32 frame )
+Yps::Crypt::DecryptFrame64( CryptKey^ key, UInt32 frame )
 {
     return UInt24( crypt64_decryptFrame( static_cast<K64*>(key->ToPointer()), reinterpret_cast<k64Chunk&>(frame) ).u32 );
 }
 
 String^
-Yps::CryptApi::DecryptString( CryptKey^ key, String^ crypt_string )
+Yps::Crypt::DecryptString( CryptKey^ key, String^ crypt_string )
 {
     array<byte>^ bytes = Decrypt<byte>( key, crypt_string );
     if (bytes == nullptr) return nullptr;
@@ -334,7 +354,7 @@ Yps::CryptApi::DecryptString( CryptKey^ key, String^ crypt_string )
 }
 
 String^
-Yps::CryptApi::EncryptString( CryptKey^ key, String^ plain_string )
+Yps::Crypt::EncryptString( CryptKey^ key, String^ plain_string )
 {
     String^ bytes = Encrypt(key, System::Text::Encoding::Default->GetBytes(plain_string));
     if (bytes == nullptr) return nullptr;
@@ -343,19 +363,19 @@ Yps::CryptApi::EncryptString( CryptKey^ key, String^ plain_string )
 
 
 UInt24
-Yps::CryptApi::EncryptFrame24( CryptKey^ key, UInt24 frame )
+Yps::Crypt::EncryptFrame24( CryptKey^ key, UInt24 frame )
 {
     return UInt24( crypt64_binary_encryptFrame( static_cast<K64*>(key->ToPointer()), reinterpret_cast<k64Chunk&>(frame) ).u32 );
 }
 
 UInt24
-Yps::CryptApi::DecryptFrame24( CryptKey^ key, UInt24 frame )
+Yps::Crypt::DecryptFrame24( CryptKey^ key, UInt24 frame )
 {
     return UInt24( crypt64_binary_decryptFrame( static_cast<K64*>(key->ToPointer()), reinterpret_cast<k64Chunk&>(frame) ).u32 );
 }
 
 Yps::CryptBuffer^
-Yps::CryptApi::CreateHeader( CryptKey^ key, CrypsFlags mod )
+Yps::Crypt::CreateHeader( CryptKey^ key, CrypsFlags mod )
 {
     K64* k = static_cast<K64*>( key->ToPointer() );
     if ( CurrentContext != k->pass.value ) {
@@ -383,7 +403,7 @@ Yps::CryptApi::CreateHeader( CryptKey^ key, CrypsFlags mod )
 }
 
 Yps::CryptBuffer^
-Yps::CryptApi::Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete )
+Yps::Crypt::Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete )
 {
     const int len = data->GetElements();
     K64* k = (K64*)key->ToPointer();
@@ -412,7 +432,7 @@ Yps::CryptApi::Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete )
 }
 
 bool
-Yps::CryptApi::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
+Yps::Crypt::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
 {
     if ( encryptedData == nullptr ) {
         setError( "header", FourCC("hdr") );
@@ -427,7 +447,8 @@ Yps::CryptApi::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
             char buffer[24];
             CodeTable = base64_b64Table();
             array<UInt24>^ hdr = gcnew array<UInt24>(4);
-            interior_ptr<UInt24> src = encryptedData->AsBinary();
+            pin_ptr<UInt24> Src = encryptedData->AsBinary();
+            UInt24* src = Src;
             hdr[0] = *src;
             hdr[1] = *(src+1);
             hdr[2] = *(src+2);
@@ -446,7 +467,7 @@ Yps::CryptApi::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
 }
 
 bool
-Yps::CryptApi::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
+Yps::Crypt::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
 {
     if (encryptedData == nullptr) {
         setError("header", FourCC("hdr"));
@@ -478,13 +499,13 @@ Yps::CryptApi::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
 }
 
 bool
-Yps::CryptApi::StoptEn24( Yps::CryptKey^ key )
+Yps::Crypt::StoptEn24( Yps::CryptKey^ key )
 {
     return crypt64_releaseContext( (K64*)key->ToPointer() );
 }
 
 int
-Yps::CryptApi::Decrypt24( CryptKey^ key, CryptBuffer^ cryptPlusHdr )
+Yps::Crypt::Decrypt24( CryptKey^ key, CryptBuffer^ cryptPlusHdr )
 {
     interior_ptr<UInt24> dst = cryptPlusHdr->AsBinary();
     int len = cryptPlusHdr->GetElements() - 4;
@@ -500,7 +521,7 @@ Yps::CryptApi::Decrypt24( CryptKey^ key, CryptBuffer^ cryptPlusHdr )
 }
 
 int
-Yps::CryptApi::Decrypt24( CryptKey^ key, CryptBuffer^ hdr, CryptBuffer^ dat )
+Yps::Crypt::Decrypt24( CryptKey^ key, CryptBuffer^ hdr, CryptBuffer^ dat )
 {
     int len = dat == nullptr ? -1 : dat->GetElements() > 0 ? dat->GetElements() : -1;
     if (BeginDe24(key, hdr)) {
@@ -637,20 +658,41 @@ Yps::Base64Api::DecodeString( String^ data )
     return System::Text::Encoding::Default->GetString( Decode<byte>( data ) );
 }
 
-UInt24 Yps::CryptBuffer::UInt24BinarDeEncrypter::Current::get(void) {
-    return CryptApi::EncryptFrame24(key, *((UInt24*)current.ToPointer() + position));
+Yps::CryptBuffer::InnerCrypticEnumerator^
+Yps::CryptBuffer::GetInnerCrypticEnumerator(CryptKey^ use, int offset)
+{
+    return gcnew InnerCrypticEnumerator(this, use, offset);
+}
+Yps::CryptBuffer::OuterCrypticEnumerator^ 
+Yps::CryptBuffer::GetOuterCrypticEnumerator(CryptKey^ use, int offset)
+{
+    return gcnew OuterCrypticEnumerator(this, use, offset);
+}
+Yps::CryptBuffer::InnerCrypticStringEnumerator^
+Yps::CryptBuffer::GetInnerCrypticStringEnumerator(CryptKey^ use, int offset)
+{
+    return gcnew InnerCrypticStringEnumerator(this, use, offset);
+}
+Yps::CryptBuffer::OuterCrypticStringEnumerator^
+Yps::CryptBuffer::GetOuterCrypticStringEnumerator(CryptKey^ use, int offset)
+{
+    return gcnew OuterCrypticStringEnumerator(this, use, offset);
 }
 
-void  Yps::CryptBuffer::UInt24BinarDeEncrypter::Current::set(UInt24 value) {
-    *((UInt24*)current.ToPointer() + position) = CryptApi::DecryptFrame24(key, value);
+UInt24 Yps::CryptBuffer::InnerCrypticEnumerator::Current::get(void) {
+    return Crypt::EncryptFrame24(key, *((UInt24*)current.ToPointer() + position));
 }
 
-UInt24 Yps::CryptBuffer::UInt24BinarDeRecrypter::Current::get(void) {
-    return CryptApi::DecryptFrame24(key, *((UInt24*)current.ToPointer() + position));
+void  Yps::CryptBuffer::InnerCrypticEnumerator::Current::set(UInt24 value) {
+    *((UInt24*)current.ToPointer() + position) = Crypt::DecryptFrame24(key, value);
 }
 
-void  Yps::CryptBuffer::UInt24BinarDeRecrypter::Current::set(UInt24 value) {
-    *((UInt24*)current.ToPointer() + position) = CryptApi::EncryptFrame24(key, value);
+UInt24 Yps::CryptBuffer::OuterCrypticEnumerator::Current::get(void) {
+    return Crypt::DecryptFrame24(key, *((UInt24*)current.ToPointer() + position));
+}
+
+void  Yps::CryptBuffer::OuterCrypticEnumerator::Current::set(UInt24 value) {
+    *((UInt24*)current.ToPointer() + position) = Crypt::EncryptFrame24(key, value);
 }
 
 generic<class T, class C>
@@ -670,82 +712,69 @@ Yps::CryptBuffer::GetCryptCallEnumerator( CryptKey^ use, CrypsFlags mode, int of
 {
 	if ( Marshal::SizeOf<T>() == Marshal::SizeOf<C>() ) {
 		if ( mode.HasFlag( CrypsFlags::InnerCryptic ) )
-			return (Cryptator<T, C>^) gcnew UInt24BinarDeEncrypter(this, use, offsetCs);
-		else return (Cryptator<T, C>^) gcnew UInt24BinarDeRecrypter(this, use, offsetCs);
+			return (Cryptator<T, C>^) gcnew InnerCrypticEnumerator(this, use, offsetCs);
+		else return (Cryptator<T, C>^) gcnew OuterCrypticEnumerator(this, use, offsetCs);
 	} else {
 		if ( mode.HasFlag( CrypsFlags::InnerCryptic ) )
-			return (Cryptator<T, C>^) gcnew UInt24StringDeEncrypter(this, use, offsetCs);
-		else return (Cryptator<T, C>^) gcnew UInt24StringDeRecrypter(this, use, offsetCs);
+			return (Cryptator<T, C>^) gcnew InnerCrypticStringEnumerator(this, use, offsetCs);
+		else return (Cryptator<T, C>^) gcnew OuterCrypticStringEnumerator(this, use, offsetCs);
 	} return nullptr;
 }
 
-Yps::CryptBuffer::UInt24BinarDeEncrypter::UInt24BinarDeEncrypter( CryptBuffer^ init, CryptKey^ use, int oset )
+Yps::CryptBuffer::InnerCrypticEnumerator::InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
 	: Cryptator<UInt24,UInt24>(init, use, oset)
 {
     current += (start * 3);
-    CryptApi::CreateHeader( use, CrypsFlags::Binary );
+    Crypt::CreateHeader( use, CrypsFlags::Binary );
 	init->SetDataType( UInt24::typeid );
 }
 
-Yps::CryptBuffer::UInt24BinarDeRecrypter::UInt24BinarDeRecrypter( CryptBuffer^ init, CryptKey^ use, int oset )
+Yps::CryptBuffer::OuterCrypticEnumerator::OuterCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
 	: Cryptator<UInt24,UInt24>(init, use, oset)
-{ bool header = false;
-	if(header = CryptApi::BeginDe24( use, use->currentHdr() ) ) {
-        CryptBuffer^ hdrdata = gcnew CryptBuffer( use->currentHdr()->GetCopy<UInt24>() );
-        CryptApi::StoptEn24( use );
-        if (!CryptApi::BeginDe24(use, init)) {
-            CryptApi::StoptEn24( use );
-            CryptApi::BeginDe24( use, hdrdata );
-            header = false;
-        } clearAllErrors();
-	} else if ( !(header = CryptApi::BeginDe24( use, init )) ) {
-		CryptApi::StoptEn24( use );
-	} if (header) {
-        start += 4;
-        stopt -= 4;
-	} current += (start * 3);
-	init->SetDataType( UInt24::typeid );
+{
+    if (!Crypt::BeginDe24(use, use->currentHdr()))
+        throw gcnew Exception("invalid key");
 }
 
 
-Yps::CryptFrame Yps::CryptBuffer::UInt24StringDeEncrypter::Current::get( void ) {
-    frame.b64 = CryptApi::EncryptFrame64( key, *((UInt24*)current.ToPointer() + position) );
+Yps::CryptFrame Yps::CryptBuffer::InnerCrypticStringEnumerator::Current::get( void ) {
+    frame.b64 = Crypt::EncryptFrame64( key, *((UInt24*)current.ToPointer() + position) );
     return frame;
 }
 
-void  Yps::CryptBuffer::UInt24StringDeEncrypter::Current::set( CryptFrame value ) {
-    *((UInt24*)current.ToPointer() + position) = CryptApi::DecryptFrame64( key, value.b64 );
+void  Yps::CryptBuffer::InnerCrypticStringEnumerator::Current::set( CryptFrame value ) {
+    *((UInt24*)current.ToPointer() + position) = Crypt::DecryptFrame64( key, value.b64 );
 }
 
-Yps::CryptBuffer::UInt24StringDeEncrypter::UInt24StringDeEncrypter(CryptBuffer^ init, CryptKey^ use, int oset)
+Yps::CryptBuffer::InnerCrypticStringEnumerator::InnerCrypticStringEnumerator(CryptBuffer^ init, CryptKey^ use, int oset)
     : Cryptator<UInt24,CryptFrame>(init, use, oset)
 {
     current += (start * 3);
-    CryptApi::CreateHeader( use, CrypsFlags::Base64 );
+    Crypt::CreateHeader( use, CrypsFlags::Base64 );
     init->SetDataType( UInt24::typeid );
 }
 
-UInt24 Yps::CryptBuffer::UInt24StringDeRecrypter::Current::get(void) {
-    return CryptApi::DecryptFrame64( key, *((UInt32*)current.ToPointer() + position) );
+UInt24 Yps::CryptBuffer::OuterCrypticStringEnumerator::Current::get(void) {
+    return Crypt::DecryptFrame64( key, *((UInt32*)current.ToPointer() + position) );
 }
 
-void  Yps::CryptBuffer::UInt24StringDeRecrypter::Current::set(UInt24 value) {
-    *((UInt32*)current.ToPointer() + position) = CryptApi::EncryptFrame64(key, value);
+void  Yps::CryptBuffer::OuterCrypticStringEnumerator::Current::set(UInt24 value) {
+    *((UInt32*)current.ToPointer() + position) = Crypt::EncryptFrame64(key, value);
 }
 
-Yps::CryptBuffer::UInt24StringDeRecrypter::UInt24StringDeRecrypter( CryptBuffer^ init, CryptKey^ use, int oset )
+Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
     : Cryptator<UInt32,UInt24>( init, use, oset )
 {
     bool header = false;
-    if ( header = CryptApi::BeginDeString( use, use->currentHdr() ) ) {
+    if ( header = Crypt::BeginDeString( use, use->currentHdr() ) ) {
         CryptBuffer^ hdrdata = gcnew CryptBuffer(use->currentHdr()->GetCopy<UInt32>());
         crypt64_releaseContext( (K64*)use->ToPointer() );
-        if (!CryptApi::BeginDeString( use, init )) {
+        if (!Crypt::BeginDeString( use, init )) {
             crypt64_releaseContext( (K64*)use->ToPointer() );
-            CryptApi::BeginDeString( use, hdrdata );
+            Crypt::BeginDeString( use, hdrdata );
             header = false;
         } clearAllErrors();
-    } else if ( !(header = CryptApi::BeginDeString( use, init ) ) ) {
+    } else if ( !(header = Crypt::BeginDeString( use, init ) ) ) {
         crypt64_releaseContext( (K64*)use->ToPointer() );
     } if (header) {
         start += 4;

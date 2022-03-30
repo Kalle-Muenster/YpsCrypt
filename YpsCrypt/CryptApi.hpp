@@ -14,7 +14,7 @@ using namespace Stepflow;
 namespace Yps {
 
 
-	public ref class CryptApi
+	public ref class Crypt
 	{
 	private:
 		static volatile bool runs;
@@ -23,7 +23,7 @@ namespace Yps {
 		static bool fail();
 
 	public:
-		static CryptApi();
+		static Crypt();
 
 		static unsigned GetVersionNumber();
 		static String^ GetVersionString();
@@ -63,9 +63,7 @@ namespace Yps {
 		static UInt24    EncryptFrame24(CryptKey^ key, UInt24 frame);
 		static UInt24    DecryptFrame24(CryptKey^ key, UInt24 frame);
 
-		static property Yps::Error Error {
-			Yps::Error get(void) { return error; }
-		}
+		static property Yps::Error Error { Yps::Error get(void); };
 	};
 }
 

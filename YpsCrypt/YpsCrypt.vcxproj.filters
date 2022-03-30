@@ -27,7 +27,7 @@
     <ClInclude Include="settings.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
-    <ClInclude Include="CrypsApi.hpp" />
+    <ClInclude Include="CryptApi.hpp" />
     <ClInclude Include="CryptBuffer.hpp" />
     <ClInclude Include="CryptHelper.hpp" />
   </ItemGroup>
@@ -38,7 +38,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="CrypsApi.cpp" />
+    <ClCompile Include="CryptApi.cpp" />
     <ClCompile Include="CryptBuffer.cpp" />
     <ClCompile Include="CryptHelper.cpp" />
   </ItemGroup>

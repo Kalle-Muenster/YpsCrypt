@@ -65,18 +65,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\YpssCryps\YpssCryps.vcxproj" />
+    <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Consola">
-      <HintPath>..\bin\x64\Debug\Consola.dll</HintPath>
-    </Reference>
-    <Reference Include="Int24Types">
-      <HintPath>..\bin\x64\Debug\Int24Types.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\Consola\ConsolaCore5\ConsolaCore5\ConsolaCore5.vcxproj" />
+    <ProjectReference Include="..\YpsCrypt\YpsCrypt.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="test_int24_dotnet_dll">
-      <HintPath>..\..\Int24Types\bin\core5\test\x64\Debug\net5.0\test_int24_dotnet_dll.dll</HintPath>
+      <HintPath>linkage\test_int24_dotnet_dll.dll</HintPath>
     </Reference>
   </ItemGroup>
 
@@ -87,5 +86,9 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="&quot;$(ProjectDir)copyLinkage.bat&quot; &quot;$(PlatformTarget)&quot; &quot;$(ConfigurationName)&quot; " />
+  </Target>
 
 </Project>

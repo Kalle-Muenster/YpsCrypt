@@ -34,19 +34,20 @@ namespace Yps
 		CryptKey(unsigned long long hashval);
 		~CryptKey(void);
 		void* ToPointer(void);
+		bool Equals(String^ phrase);
 		CryptBuffer^ currentHdr(void);
 		CryptBuffer^ currentHdr(array<UInt24>^ set);
 		CryptBuffer^ currentHdr(CryptBuffer^ set);
-
+		
 	public:
 
-		virtual bool IsValid(void);
+		virtual bool IsValid( void );
 		property unsigned long long Hash {
 			unsigned long long get(void);
 		}
 		bool Equals( CryptKey^ That ) {
-			if (That == nullptr) return false;
-			return this->Hash == That->Hash;
+			if ( That ) return this->Hash == That->Hash;
+			else return false;
 		}
 		virtual bool Equals( Object^ unknown ) override {
 			if ( unknown == nullptr ) return false;
@@ -55,7 +56,24 @@ namespace Yps
 				    == safe_cast<CryptKey^>( unknown )->Hash;
 			} return false;
 		}
-		bool Equals( String^ phrase );
+
+		static bool operator ==( CryptKey^ This, CryptKey^ That ) {
+			Object^ nulli = nullptr;
+			if ( This->Equals( nulli ) ) return ( That->Equals( nulli ) ) ? true : false;
+			if ( That->Equals( nulli ) ) return ( This->Equals( nulli ) ) ? true : false;
+			return This->Hash == That->Hash;
+		}
+
+		static bool operator !=( CryptKey^ This, CryptKey^ That ) {
+			return !(operator==(This, That));
+		}
+
+		String^ Encrypt( String^ string );
+		String^ Decrypt( String^ crypts );
+
+		bool VerifyPhrase( String^ phrase ) {
+			return Equals( phrase );
+		}
 	};
 
 

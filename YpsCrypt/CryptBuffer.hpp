@@ -89,7 +89,7 @@ namespace Yps
 			Enumerator( CryptBuffer^ instance, int offset ) {
 				start = offset;
 				stopt = instance->GetElements() - start;
-				current = instance->GetPointer();// +(start * Marshal::SizeOf<T>())) );
+				current = instance->GetPointer();
 				position = -1;
 			}
 
@@ -207,11 +207,11 @@ namespace Yps
 			}
 		};
 
-		ref class UInt24BinarDeEncrypter
+		ref class InnerCrypticEnumerator
 			: public Cryptator<UInt24,UInt24>
 		{
 		public:
-			UInt24BinarDeEncrypter( CryptBuffer^ init, CryptKey^ use, int oset );
+			InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
 		public:
 			property UInt24 Current {
@@ -220,11 +220,11 @@ namespace Yps
 			}
 		};
 
-		ref class UInt24BinarDeRecrypter
+		ref class OuterCrypticEnumerator
 			: public CryptBuffer::Cryptator<UInt24, UInt24>
 		{
 		public:
-			UInt24BinarDeRecrypter(CryptBuffer^ init, CryptKey^ use, int oset);
+			OuterCrypticEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
 
 		public:
 			property UInt24 Current {
@@ -233,14 +233,14 @@ namespace Yps
 			}
 		};
 
-		ref class UInt24StringDeEncrypter
+		ref class InnerCrypticStringEnumerator
 			: public Cryptator<UInt24,CryptFrame>
 		{
 		private:
 			CryptFrame frame;
 
 		public:
-			UInt24StringDeEncrypter(CryptBuffer^ init, CryptKey^ use, int oset);
+			InnerCrypticStringEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
 
 		public:
 			property CryptFrame Current {
@@ -249,11 +249,11 @@ namespace Yps
 			}
 		};
 
-		ref class UInt24StringDeRecrypter
+		ref class OuterCrypticStringEnumerator
 			: public Cryptator<UInt32,UInt24>
 		{
 		public:
-			UInt24StringDeRecrypter(CryptBuffer^ init, CryptKey^ use, int oset);
+			OuterCrypticStringEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
 
 		public:
 			property UInt24 Current {
@@ -284,8 +284,9 @@ namespace Yps
 		array<T>^ GetCopy( void ) {
 			int bytesize = GetDataSize();
 			int typesize = sizeof(T);
-			array<T>^ a = gcnew array<T>(bytesize / typesize + (bytesize % typesize > 0 ? 1 : 0));
-			Marshal::CreateAggregatedObject<array<T>^>( data, a );
+			int loopsize = bytesize / typesize;
+			array<T>^ a = gcnew array<T>(loopsize + (bytesize % typesize > 0 ? 1 : 0));
+			Marshal::PtrToStructure(data, a);
 			return a;
 		}
 
@@ -301,6 +302,10 @@ namespace Yps
 		generic<class T, class C> where T : ValueType where C : ValueType
 		virtual Cryptator<T, C>^ GetCryptCallEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs);
 
+		InnerCrypticEnumerator^ GetInnerCrypticEnumerator( CryptKey^ use, int offset );
+		OuterCrypticEnumerator^ GetOuterCrypticEnumerator( CryptKey^ use, int offset );
+		InnerCrypticStringEnumerator^ GetInnerCrypticStringEnumerator(CryptKey^ use, int offset);
+		OuterCrypticStringEnumerator^ GetOuterCrypticStringEnumerator(CryptKey^ use, int offset);
 
 		IntPtr GetPointer() {
 			return data;
