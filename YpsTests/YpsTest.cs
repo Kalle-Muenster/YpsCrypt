@@ -315,49 +315,34 @@ namespace Yps
 
         private void outerCryptics()
         {
-            NextCase( "OuterCryptic BufferIteration" );
+            // prepare a buffer containing cryptic data where the test will search
+            // possition of a small portion of given cleartext data within it.  
+            NextCase( "OuterCryptic Buffer Enumerator" );
             string cleartext = "then return so obtained UInt24 positional index which should point";
-            StdStream.Out.Write( cleartext );
             byte[] cryptical = Encoding.Default.GetBytes( cleartext );
             CryptBuffer buffer = new CryptBuffer( cryptical );
-            CryptBuffer header = Crypt.Encrypt24( keypassa, buffer );
-            StdStream.Out.Write( cryptical );
+            CryptBuffer header = Crypt.Encrypt24( keypassa, buffer, true );
             int equals = 0;
-            CryptBuffer.OuterCrypticEnumerator outercryptric = buffer.GetOuterCrypticEnumerator( keypassa, 0 );
             for ( int i = 0; i < cleartext.Length; ++i ) {
                 if (cryptical[i] == cleartext[i]) ++equals;
-            }
-            CheckStep( equals < 2, "testdata succsessfully prepared" );
+            } if( equals >= 2 ) FailStep( "testdata incorrectly prepared" );
 
-            StringParser parser = new StringParser("UInt24");
-
-            
+            // testing the enumerator if it can find a searchd word within cryptic data
+            CryptBuffer.OuterCrypticEnumerator outercryptric = buffer.GetOuterCrypticEnumerator(keypassa, 0);
+            StringParser parser = new StringParser( "UInt24" );
             buffer.DataIndex = -1;
-            
             while ( outercryptric.MoveNext() ) { ++buffer.DataIndex;
-                // parse each frames 3 bytes of clear text for some search text
-                // and break the loop as soon parser encounters the search text
-                // within the cryptic data which the enumerator is iterating over 
-                if ( parser.Parse(outercryptric.Current) ) break;
+                // parse each frames 3 bytes for clear text search of word 'UInt24'
+                // and break the loop as soon the parser encounters the search text
+                if ( parser.Parse( outercryptric.Current ) ) break;
             } outercryptric.Dispose();
 
-            buffer.DataIndex -= (parser.search.Length / 3);
+            // calculate the exact byte index at which the searched word begins in the cryptic data
+            buffer.DataIndex = (buffer.DataIndex - (parser.search.Length / 3))+1;
             int foundPosition = (int)(buffer.DataIndex * 3);
 
-            // then return so obtained UInt24 positional index which should point
-            // position where that searched clear text portion begins within the
-            // cryptic data. then begin decrypting at that position to verify the
-            // correct position was found
-            char[] foundText = new char[(cleartext.Length - foundPosition) + header.GetDataSize()];
-            char[] hdrdat = header.GetCopy<char>();
-            hdrdat.CopyTo(foundText,0);
-            cryptical.CopyTo(foundText,hdrdat.Length);
-
-
-
-            string result = new string(Crypt.BinaryDecrypt(keypassa, foundText), 0, foundText.Length - hdrdat.Length);
-            StdStream.Out.WriteLine(result);
-            MatchStep(result, cleartext.Substring(foundPosition), "found position of word ", parser.search);
+            // and log result of comparing the position it found against the expected value 
+            MatchStep( foundPosition, 24, "position of searched cleartext portion within cryptic data" );
             CloseCase( CurrentCase );
         }
 
@@ -389,7 +374,7 @@ namespace Yps
             cryptingBinar();
             cryptingDirectly();
 
-            //   outerCryptics();
+            outerCryptics();
 
             deInitialization();
 
