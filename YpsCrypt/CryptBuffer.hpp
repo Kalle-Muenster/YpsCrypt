@@ -9,10 +9,7 @@
 #define _CryptBuffer_hpp_
 #include "CryptHelper.hpp"
 
-using namespace System;
 using namespace Stepflow;
-using namespace System::Collections;
-using namespace System::Runtime::InteropServices;
 
 
 namespace Yps
@@ -25,38 +22,6 @@ namespace Yps
 
 	ref class CryptKey;
 	ref class Crypt;
-
-	[StructLayoutAttribute(LayoutKind::Explicit, Size = 4)]
-	public value struct CryptFrame
-	{
-	public:
-
-		[FieldOffsetAttribute(0)]
-		UInt32 b64;
-		[FieldOffsetAttribute(0)]
-		UInt24 bin;
-
-	private:
-
-		[FieldOffsetAttribute(0)]
-		unsigned char dat;
-
-	public:
-
-		CryptFrame( UInt32 init ) : b64(init) {}
-		CryptFrame( array<unsigned char>^ init, int offset, int length );
-		CryptFrame( interior_ptr<unsigned char> init, int offset, int length );
-
-		operator UInt24% (void) {
-			return bin;
-		}
-
-		property unsigned char default[int] {
-			unsigned char get(int idx) { interior_ptr<unsigned char> p(&dat); return *(p+idx); }
-			void set(int idx, unsigned char value) { interior_ptr<unsigned char> p(&dat); *(p + idx) = value; }
-		}
-	};
-
 
 	public ref class CryptBuffer
 		: public IDisposable
@@ -221,15 +186,24 @@ namespace Yps
 		};
 
 		ref class OuterCrypticEnumerator
-			: public CryptBuffer::Cryptator<UInt24, UInt24>
+			: public CryptBuffer::Cryptator<UInt24,UInt24>
 		{
 		public:
+			IParser<UInt24>^ Search;
+
 			OuterCrypticEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
 
-		public:
 			property UInt24 Current {
 				virtual UInt24 get(void) override;
 				virtual void set(UInt24 value) override;
+			}
+
+			virtual bool MoveNext(void) override {
+				if (Search != nullptr) {
+					if ( Cryptator<UInt24,UInt24>::MoveNext() ) {
+						return !Search->Parse( Current );
+					} else return false;
+				} else return Cryptator<UInt24,UInt24>::MoveNext();
 			}
 		};
 
@@ -253,12 +227,21 @@ namespace Yps
 			: public Cryptator<UInt32,UInt24>
 		{
 		public:
+			IParser<UInt24>^ Search;
+
 			OuterCrypticStringEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
 
-		public:
 			property UInt24 Current {
 				virtual UInt24 get(void) override;
 				virtual void set(UInt24 value) override;
+			}
+
+			virtual bool MoveNext(void) override {
+				if (Search != nullptr) {
+					if ( Cryptator<UInt32,UInt24>::MoveNext() ) {
+						return !Search->Parse( Current );
+					} else return false;
+				} else return Cryptator<UInt32,UInt24>::MoveNext();
 			}
 		};
 

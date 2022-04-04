@@ -11,12 +11,46 @@
 
 using namespace System;
 using namespace Stepflow;
+using namespace System::Collections;
+using namespace System::Runtime::InteropServices;
 
+typedef unsigned char byte;
 
 namespace Yps
 {
 
 	ref class CryptBuffer;
+
+	[StructLayoutAttribute(LayoutKind::Explicit, Size = 4)]
+	public value struct CryptFrame
+	{
+	public:
+
+		[FieldOffsetAttribute(0)]
+		UInt32 b64;
+		[FieldOffsetAttribute(0)]
+		UInt24 bin;
+
+	private:
+
+		[FieldOffsetAttribute(0)]
+		unsigned char dat;
+
+	public:
+
+		CryptFrame(UInt32 init) : b64(init) {}
+		CryptFrame(array<unsigned char>^ init, int offset, int length);
+		CryptFrame(interior_ptr<unsigned char> init, int offset, int length);
+
+		operator UInt24 % (void) {
+			return bin;
+		}
+
+		property unsigned char default[int]{
+			unsigned char get(int idx) { interior_ptr<unsigned char> p(&dat); return *(p + idx); }
+			void set(int idx, unsigned char value) { interior_ptr<unsigned char> p(&dat); *(p + idx) = value; }
+		}
+	};
 
 	public ref class CryptKey
 		: public IDisposable
@@ -139,6 +173,151 @@ namespace Yps
 		
 		static property Yps::Error Error {
 			Yps::Error get(void) { return error; }
+		}
+	};
+
+
+	generic<class E>
+	public interface class IParser {
+	public:
+		property bool Found { bool get(void) = 0; }
+		property int Frame { int get(void) = 0; }
+		void SetSearchedSequence( Object^ sequence ) = 0;
+		bool Parse( E next ) = 0;
+		E Next( E next ) = 0;
+	};
+
+	// interface for parsers which search in buffers of type 'T'
+    // for a given sequence of elements in blocks of type 'E'
+    // (for parsing strings by passing 4 chars at once as 32bit chunks
+    // these types should be given: T as 'string', E as 'uint'
+	generic<class T, class E>
+	public interface class IDataParser : public IParser<E>
+	{
+	public:
+		property T Sequence { T get(void) = 0; void set(T) = 0; }
+	};
+
+	public ref class DataSearch
+		: public IDataParser<array<byte>^,UInt24>
+	{
+	private:
+		CryptFrame      framed;
+		int             actual;
+		int             founds;
+		array<byte>^    bucket;
+		array<byte>^    search;
+
+		bool nextByte(byte next) {
+			if (Found) return true;
+			int current = founds;
+			if (search[founds] == next) bucket[founds++] = next;
+			else founds = 0;
+			return founds > current;
+		}
+
+	public:
+		property bool Found {
+			virtual bool get(void) override { return founds == bucket->Length; }
+		}
+
+		property int Frame {
+			virtual int get(void) { return Found ? actual : -1; }
+		}
+
+		virtual void SetSearchedSequence( Object^ sequence ) {
+			Sequence = (array<byte>^)sequence;
+		}
+
+		property array<byte>^ Sequence {
+			virtual array<byte>^ get(void) override { return search; }
+			virtual void set( array<byte>^ value ) override {
+				search = gcnew array<byte>( value->Length );
+				bucket = gcnew array<byte>( value->Length );
+				System::Array::Copy( value, search, value->Length );
+				founds = 0;
+			}
+		}
+
+		DataSearch( array<byte>^ searchForSequence ) {
+			Sequence = searchForSequence;
+		}
+
+		virtual bool Parse( UInt24 next ) override {
+			framed.bin = next;
+			for (actual = 0; actual < 3; ++actual)
+				if ( nextByte( framed[actual] ) )
+					if ( Found ) return true;
+			return false;
+		}
+
+		virtual UInt24 Next( UInt24 next ) override {
+			framed.bin = next;
+			for ( int i = 0; i < 3; ++i )
+				if ( nextByte( framed[i] ) )
+					if (Found) return actual = i;
+			return next;
+		}
+	};
+
+	public ref class StringSearch
+		: public IDataParser<String^,UInt24>
+	{
+	private:
+		CryptFrame      framed;
+		array<wchar_t>^ bucket;
+		int             founds;
+		String^         search;
+		int             actual;
+
+		bool nextCharacter(wchar_t next) {
+			if (Found) return true;
+			int current = founds;
+			if (search[founds] == next) bucket[founds++] = next;
+			else founds = 0;
+			return founds > current;
+		}
+
+	public:
+		property bool Found {
+			virtual bool get(void) override { return founds == bucket->Length; }
+		}
+
+		property int Frame {
+			virtual int get(void) { return Found ? actual : -1; }
+		}
+
+		property String^ Sequence {
+			virtual String^ get(void) override { return search; }
+			virtual void set(String^ value) override {
+				search = value;
+				bucket = gcnew array<wchar_t>(search->Length);
+				founds = 0;
+			}
+		}
+
+		StringSearch( String^ searchForSequence ) {
+			Sequence = searchForSequence;
+		}
+
+		virtual void SetSearchedSequence( Object^ sequence ) {
+			Sequence = (String^)sequence;
+		}
+
+		virtual bool Parse( UInt24 next ) override {
+			framed.bin = next;
+			for (actual = 0; actual < 3; ++actual)
+				if (nextCharacter((char)framed[actual]))
+					if (Found) return true;
+			return false;
+		}
+
+		virtual UInt24 Next(UInt24 next) override {
+			framed.bin = next;
+			for (int i = 0; i < 3; ++i)
+				if ( nextCharacter( framed[i] ) )
+					if (Found) return actual = i;
+			return next;
 		}
 	};
 
