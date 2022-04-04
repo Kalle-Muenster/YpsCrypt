@@ -405,7 +405,7 @@ Yps::Crypt::CreateHeader( CryptKey^ key, CrypsFlags mod )
 Yps::CryptBuffer^
 Yps::Crypt::Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete )
 {
-    const int len = data->GetElements();
+    const int len = data->GetDataSize() / 3;
     K64* k = (K64*)key->ToPointer();
     if( CurrentContext != k->pass.value ) {
         if( crypt64_prepareContext( k, Byte( CrypsFlags::Binary ) ) ) {
@@ -781,4 +781,45 @@ Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( Cr
         stopt -= 4;
     } current += (start * 4);
     init->SetDataType( UInt32::typeid );
+}
+
+generic<class T> where T : ValueType
+array<T>^ Yps::CryptBuffer::GetCopy(void) {
+    int bytesize = GetDataSize();
+    int typesize = sizeof(T);
+    int loopsize = bytesize / typesize;
+    loopsize = loopsize + (bytesize % typesize > 0 ? 1 : 0);
+    void* d = data.ToPointer();
+    switch (sizeof(T)) {
+    case 1: { array<byte>^ copy = gcnew array<byte>(loopsize); 
+        byte* src = (byte*)d;
+        for (int i = 0; i < loopsize; ++i) 
+            copy[i] = src[i];
+        return reinterpret_cast<array<T>^>(copy);
+    }
+    case 2: { array<word>^ copy = gcnew array<word>(loopsize);
+        word* src = (word*)d;
+        for (int i = 0; i < loopsize; ++i)
+            copy[i] = src[i];
+        return reinterpret_cast<array<T>^>(copy);
+    }
+    case 3: { array<Stepflow::UInt24>^ copy = gcnew array<Stepflow::UInt24>(loopsize);
+        Stepflow::UInt24* src = (Stepflow::UInt24*)d;
+        for (int i = 0; i < loopsize; ++i)
+            copy[i] = src[i];
+        return reinterpret_cast<array<T>^>(copy);
+    }
+    case 4: { array<uint>^ copy = gcnew array<uint>(loopsize);
+        uint* src = (uint*)d;
+        for (int i = 0; i < loopsize; ++i)
+            copy[i] = src[i];
+        return reinterpret_cast<array<T>^>(copy);
+    }
+    case 8: { array<ulong>^ copy = gcnew array<ulong>(loopsize);
+        ulong* src = (ulong*)d;
+        for (int i = 0; i < loopsize; ++i)
+            copy[i] = src[i];
+        return reinterpret_cast<array<T>^>(copy);
+    }
+    } return nullptr;
 }

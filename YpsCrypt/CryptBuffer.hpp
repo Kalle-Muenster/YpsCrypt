@@ -280,15 +280,10 @@ namespace Yps
 			this->count = newBuffer->Length;
 		}
 
+
+
 		generic<class T> where T : ValueType
-		array<T>^ GetCopy( void ) {
-			int bytesize = GetDataSize();
-			int typesize = sizeof(T);
-			int loopsize = bytesize / typesize;
-			array<T>^ a = gcnew array<T>(loopsize + (bytesize % typesize > 0 ? 1 : 0));
-			Marshal::PtrToStructure(data, a);
-			return a;
-		}
+        array<T>^ GetCopy(void);
 
 		generic<class T> where T : ValueType
 		virtual Enumerator<T>^ GetEnumerator();
