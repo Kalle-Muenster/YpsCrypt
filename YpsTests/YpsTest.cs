@@ -262,56 +262,7 @@ namespace Yps
 
             // Todo verify resulting dat buffer got decrypted back corectly
         }
-        
-        public struct StringParser
-        {
-            public CryptFrame framed;
-            public bool   schwop;
-            public bool   schwip { 
-                get { return !schwop; }
-                set { schwop = !value; }
-            }
-            public byte   merken;
-            public char[] bucket;
-            public int    founds;
-            public string search;
-
-            public bool Found {
-                get { return founds == bucket.Length; }
-            }
-
-            public StringParser(string searchForSequence) : this()
-            {
-                SetSearchVerb( searchForSequence );
-            }
-
-            public void SetSearchVerb(string sequence)
-            {
-                schwop = false;
-                search = sequence;
-                bucket = new char[sequence.Length];
-                founds = 0;
-            }
-
-            private bool checkCharacter(char next)
-            {
-                if( Found ) return true;
-                int current = founds;
-                if (search[founds] == next) bucket[founds++] = next;
-                else founds = 0;
-                return founds > current;
-            }
-
-
-            public bool Parse( UInt24 next )
-            {
-                framed.bin = next;
-                checkCharacter((char)framed[0]);
-                checkCharacter((char)framed[1]);
-                checkCharacter((char)framed[2]);
-                return Found;
-            }
-        }
+       
 
         private void outerCryptics()
         {
@@ -328,21 +279,17 @@ namespace Yps
             } if( equals >= 2 ) FailStep( "testdata incorrectly prepared" );
 
             // testing the enumerator if it can find a searchd word within cryptic data
-            CryptBuffer.OuterCrypticEnumerator outercryptric = buffer.GetOuterCrypticEnumerator(keypassa, 0);
-            StringParser parser = new StringParser( "UInt24" );
-            buffer.DataIndex = -1;
-            while ( outercryptric.MoveNext() ) { ++buffer.DataIndex;
-                // parse each frames 3 bytes for clear text search of word 'UInt24'
-                // and break the loop as soon the parser encounters the search text
-                if ( parser.Parse( outercryptric.Current ) ) break;
-            } outercryptric.Dispose();
+            CryptBuffer.OuterCrypticEnumerator enumerator = buffer.GetOuterCrypticEnumerator(keypassa, 0);
+            // parse each frames 3 bytes for clear text search of word 'UInt24'
+            // and break the loop as soon the parser encounters the search text
+            enumerator.Search = new StringSearch( "UInt24" );
+            while( enumerator.MoveNext() );
 
             // calculate the exact byte index at which the searched word begins in the cryptic data
-            buffer.DataIndex = (buffer.DataIndex - (parser.search.Length / 3))+1;
-            int foundPosition = (int)(buffer.DataIndex * 3);
+            int foundPosition = ((enumerator.Position - ((enumerator.Search as StringSearch).Sequence.Length / 3)) + 1) * 3;
 
             // and log result of comparing the position it found against the expected value 
-            MatchStep( foundPosition, 24, "position of searched cleartext portion within cryptic data" );
+            MatchStep( foundPosition, 24, "position of searched cleartext portion within a cryptic data buffer" );
             CloseCase( CurrentCase );
         }
 
