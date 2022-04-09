@@ -49,9 +49,9 @@ Yps::CryptBuffer::AsBinary( void )
 interior_ptr<Yps::CryptFrame>
 Yps::CryptBuffer::AsFrames(void)
 {
-	count = GetDataSize() / 3;
-	size = 3;
-	type = UInt24::typeid;
+	count = GetDataSize() / 4;
+	size = 4;
+	type = System::UInt32::typeid;
 	return (CryptFrame*)data.ToPointer();
 }
 
@@ -82,13 +82,14 @@ Yps::CryptBuffer::CryptBuffer( int data_size )
 	size = 1;
 }
 
-Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size, Type^ data_type )
+Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size )
 {
 	type = System::Byte::typeid;
-	data = buffer;
-	count = data_size * size;
-	free = false;
 	size = 1;
+	data = buffer;
+	count = data_size;
+	free = false;
+	
 }
 
 Yps::CryptBuffer::CryptBuffer( Type^ data_type, int array_size )

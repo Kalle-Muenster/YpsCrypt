@@ -248,7 +248,7 @@ namespace Yps
 		CryptBuffer( void );
 		CryptBuffer( int data_size );
 		CryptBuffer( Array^ data_array );
-		CryptBuffer( IntPtr data_pntr, int data_size, Type^ data_type );
+		CryptBuffer( IntPtr data_pntr, int data_size );
 		CryptBuffer( Type^ data_type, int array_length );
 		~CryptBuffer();
 
