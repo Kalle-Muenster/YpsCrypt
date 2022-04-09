@@ -2,8 +2,8 @@
 /////////////////////////////////
 
 using Consola;
+using Consola.Tests;
 using System.Collections.Generic;
-using Int24Tests.Tests;
 using Yps;
 
 List<string> Args = new( args );
@@ -16,7 +16,7 @@ StdStream.Init(
     CreationFlags.CreateLog
 );
 
-TestCase test = new CrypsTests(
+TestSuite test = new CrypsTests(
     Args.Contains("-v") ||
     Args.Contains("--verbose")
 ).Run();

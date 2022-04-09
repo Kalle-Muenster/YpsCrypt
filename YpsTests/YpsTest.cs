@@ -3,12 +3,12 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Consola;
-using Int24Tests.Tests;
+using Consola.Tests;
 using Stepflow;
 
 namespace Yps
 {
-    public class CrypsTests : TestCase
+    public class CrypsTests : TestSuite
     {
         private CryptKey keypassa = Crypt.CreateKey("invalid");
         private string testdata;

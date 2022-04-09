@@ -246,16 +246,16 @@ bool Yps::Crypt::check( uint size )
 
 bool Yps::Crypt::fail( void )
 {
-    if (!wasError()) Crypt::error = Yps::Error::NoError;
+    if ( !wasError() ) Crypt::error = Yps::Error::NoError;
     return Crypt::error;
 }
 
 generic<class T> String^
 Yps::Crypt::Encrypt( CryptKey^ key, array<T>^ Src )
 {
-    if (fail()) return nullptr;
+    if ( fail() ) return nullptr;
     const uint size_inp = Src->Length * sizeof(T);
-    uint size_out = CRYPT64_ENCRYPTED_SIZE(size_inp);
+    uint size_out = CRYPT64_ENCRYPTED_SIZE( size_inp );
     array<char>^ Dst = gcnew array<char>(size_out + 1);
     pin_ptr<T> src(&Src[0]);
     pin_ptr<char> pdst(&Dst[0]);
@@ -276,7 +276,12 @@ Yps::Crypt::Decrypt( CryptKey^ key, String^ cryptisch )
 {
     if ( fail() ) return nullptr;
     const int size_enc = cryptisch->Length;
-    uint size_dec = CRYPT64_DECRYPTED_SIZE( size_enc );
+    if (size_enc < 16) {
+        setError( "header", FourCC("hdr") );
+        check(0);
+        return nullptr;
+    }
+    uint size_dec = CRYPT64_DECRYPTED_SIZE(size_enc);
     int prox_dec = (size_dec + ( sizeof(T) - (size_dec % sizeof(T)) ) );
     array<byte>^ Src = Encoding::ASCII->GetBytes(cryptisch);
     array<T>^ Dst = gcnew array<T>( prox_dec / sizeof(T) );
@@ -312,6 +317,11 @@ Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
 {
     if( fail() ) return nullptr;
     const int size_src = Src->Length * sizeof(T);
+    if (size_src < 12) {
+        setError( "header", FourCC("hdr") );
+        check(0);
+        return nullptr;
+    }
     int size_dst = size_src - 12;
     const int rest_dst = size_dst % sizeof(T);
     int null_dst = sizeof(T) - rest_dst;
@@ -438,7 +448,7 @@ Yps::Crypt::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
         setError( "header", FourCC("hdr") );
         return false;
     } else if ( encryptedData->GetDataSize() < 12 ) {
-        setError("header", FourCC("hdr"));
+        setError( "header", FourCC("hdr") );
         return false;
     }
 	K64* k = static_cast<K64*>( key->ToPointer() );
@@ -462,7 +472,7 @@ Yps::Crypt::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
             } else
                 return false;
         }
-    } else setError("context", FourCC("ctx") );
+    } else setError( "context", FourCC("ctx") );
     return false;
 }
 
@@ -470,11 +480,11 @@ bool
 Yps::Crypt::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
 {
     if (encryptedData == nullptr) {
-        setError("header", FourCC("hdr"));
+        setError( "header", FourCC("hdr"));
         return false;
     }
     else if (encryptedData->GetDataSize() < 16) {
-        setError("header", FourCC("hdr"));
+        setError( "header", FourCC("hdr"));
         return false;
     }
     K64* k = static_cast<K64*>( key->ToPointer() );

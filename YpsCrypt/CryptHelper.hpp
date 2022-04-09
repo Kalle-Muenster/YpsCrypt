@@ -75,6 +75,8 @@ namespace Yps
 		
 	public:
 
+		const static CryptKey^ InvalidKey = gcnew CryptKey(unsigned long long int(0));
+
 		virtual bool IsValid( void );
 		property unsigned long long Hash {
 			unsigned long long get(void);
