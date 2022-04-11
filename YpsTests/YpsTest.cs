@@ -36,7 +36,7 @@ namespace Yps
             return password; 
         }
 
-        public CrypsTests( bool verbose ) : base( verbose )
+        public CrypsTests( bool verbose, bool xml ) : base( verbose, xml )
         { }
 
         private void printVersionNumber()

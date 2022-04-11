@@ -1,29 +1,14 @@
 {
   "format": 1,
   "restore": {
-    "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\YpsTest.csproj": {}
+    "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj": {}
   },
   "projects": {
-    "C:\\WORKSPACE\\PROJECTS\\Consola\\ConsolaCore5\\ConsolaCore5\\ConsolaCore5.vcxproj": {
+    "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj": {
       "restore": {
-        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\Consola\\ConsolaCore5\\ConsolaCore5\\ConsolaCore5.vcxproj",
-        "projectName": "Consola",
-        "projectPath": "C:\\WORKSPACE\\PROJECTS\\Consola\\ConsolaCore5\\ConsolaCore5\\ConsolaCore5.vcxproj",
-        "frameworks": {
-          "native": {
-            "projectReferences": {}
-          }
-        }
-      },
-      "frameworks": {
-        "native": {}
-      }
-    },
-    "C:\\WORKSPACE\\PROJECTS\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj": {
-      "restore": {
-        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj",
+        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj",
         "projectName": "Int24Types",
-        "projectPath": "C:\\WORKSPACE\\PROJECTS\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj",
+        "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj",
         "frameworks": {
           "native": {
             "projectReferences": {}
@@ -34,16 +19,16 @@
         "native": {}
       }
     },
-    "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj": {
+    "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj": {
       "restore": {
-        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj",
+        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj",
         "projectName": "YpsCrypt",
-        "projectPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj",
+        "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj",
         "frameworks": {
           "native": {
             "projectReferences": {
-              "C:\\WORKSPACE\\PROJECTS\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj": {
-                "projectPath": "C:\\WORKSPACE\\PROJECTS\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj"
+              "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj": {
+                "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\Int24Types\\core5\\Int24Type\\Int24Type.vcxproj"
               }
             }
           }
@@ -53,17 +38,18 @@
         "native": {}
       }
     },
-    "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\YpsTest.csproj": {
+    "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj": {
       "version": "0.0.0.1",
       "restore": {
-        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\YpsTest.csproj",
+        "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj",
         "projectName": "Yps.Crypt",
-        "projectPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\YpsTest.csproj",
+        "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj",
         "packagesPath": "C:\\Users\\kalle\\.nuget\\packages\\",
-        "outputPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsTests\\obj\\",
+        "outputPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
           "C:\\Users\\kalle\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -75,17 +61,16 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://api.nuget.org/v3/index.json": {}
+          "C:\\Program Files\\dotnet": {},
+          "d:\\LIBRARIES": {},
+          "https://www.nuget.org/api/v2/": {}
         },
         "frameworks": {
           "net5.0": {
             "targetAlias": "net5.0",
             "projectReferences": {
-              "C:\\WORKSPACE\\PROJECTS\\Consola\\ConsolaCore5\\ConsolaCore5\\ConsolaCore5.vcxproj": {
-                "projectPath": "C:\\WORKSPACE\\PROJECTS\\Consola\\ConsolaCore5\\ConsolaCore5\\ConsolaCore5.vcxproj"
-              },
-              "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj": {
-                "projectPath": "C:\\WORKSPACE\\PROJECTS\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj"
+              "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj": {
+                "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj"
               }
             }
           }

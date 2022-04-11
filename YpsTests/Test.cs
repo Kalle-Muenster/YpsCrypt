@@ -18,7 +18,8 @@ StdStream.Init(
 
 TestSuite test = new CrypsTests(
     Args.Contains("-v") ||
-    Args.Contains("--verbose")
+    Args.Contains("--verbose"),
+    Args.Contains("--xml")
 ).Run();
 
 return test.wasErrors() ?

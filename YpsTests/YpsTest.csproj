@@ -69,16 +69,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Consola\ConsolaCore5\ConsolaCore5\ConsolaCore5.vcxproj">
-      <CopyLocal>True</CopyLocal>
+    <ProjectReference Include="..\YpsCrypt\YpsCrypt.vcxproj">
+      <Private>true</Private>
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
     </ProjectReference>
-    <ProjectReference Include="..\YpsCrypt\YpsCrypt.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ConsolaTests">
-      <HintPath>linkage\ConsolaTests.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Consola">
+      <HintPath>..\..\Int24Types\core5\Int24Tests\linkage\Consola.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Consola.Tests">
+      <HintPath>..\..\Int24Types\core5\Int24Tests\linkage\Consola.Tests.dll</HintPath>
+      <Private>true</Private>
     </Reference>
   </ItemGroup>
 
