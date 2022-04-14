@@ -184,15 +184,17 @@ namespace Yps
 	{
 	public:
 		property bool Found { bool get(void) = 0; }
-		property int Frame { int get(void) = 0; }
+		property int Offset { int get(void) = 0; }
+		int  FoundAt( int actualFrameIndex ) = 0;
 		void SetSearchedSequence( Object^ sequence ) = 0;
+		bool Next( void ) = 0;
 		bool Parse( E next ) = 0;
-		E Next( E next ) = 0;
+		E Check( E next ) = 0;
 	};
 
 	// interface for parsers which search in buffers of type 'T'
     // for a given sequence of elements in blocks of type 'E'
-    // (for parsing strings by passing 4 chars at once as 32bit chunks
+    // (for parsing strings by passing 4 chars at once as 32bit integer elements
     // these types should be given: T as 'string', E as 'uint'
 	generic<class T, class E>
 	public interface class IDataParser : public IParser<E>
@@ -201,7 +203,7 @@ namespace Yps
 		property T Sequence { T get(void) = 0; void set(T) = 0; }
 	};
 
-	public ref class DataSearch
+	public ref class DataSearch24
 		: public IDataParser<array<byte>^,UInt24>
 	{
 	private:
@@ -211,10 +213,10 @@ namespace Yps
 		array<byte>^    bucket;
 		array<byte>^    search;
 
-		bool nextByte(byte next) {
-			if (Found) return true;
+		bool nextByte( byte next ) {
+			if ( Found ) return true;
 			int current = founds;
-			if (search[founds] == next) bucket[founds++] = next;
+			if ( search[founds] == next ) bucket[founds++] = next;
 			else founds = 0;
 			return founds > current;
 		}
@@ -224,8 +226,16 @@ namespace Yps
 			virtual bool get(void) override { return founds == bucket->Length; }
 		}
 
-		property int Frame {
-			virtual int get(void) { return Found ? actual : -1; }
+		property int Offset {
+			virtual int get(void) = IDataParser<array<byte>^,UInt24>::Offset::get {
+				if (Found) {
+					return (3 + (actual - (search->Length % 3))) % 3;
+				}
+				else return -1;
+			}
+		}
+		virtual int FoundAt( int framePosition ) override {
+			return 1 + ( ( framePosition - (search->Length / 3) ) * 3 ) + Offset;
 		}
 
 		virtual void SetSearchedSequence( Object^ sequence ) {
@@ -242,7 +252,7 @@ namespace Yps
 			}
 		}
 
-		DataSearch( array<byte>^ searchForSequence ) {
+		DataSearch24( array<byte>^ searchForSequence ) {
 			Sequence = searchForSequence;
 		}
 
@@ -254,16 +264,25 @@ namespace Yps
 			return false;
 		}
 
-		virtual UInt24 Next( UInt24 next ) override {
+		virtual UInt24 Check( UInt24 next ) override {
 			framed.bin = next;
 			for ( int i = 0; i < 3; ++i )
 				if ( nextByte( framed[i] ) )
 					if (Found) return actual = i;
 			return next;
 		}
+
+		virtual bool Next( void ) override {
+			bool lastFound = Found;
+			if ( lastFound ) {
+				bucket->Clear( bucket, 0, bucket->Length );
+				framed.bin = UInt24::MinValue;
+				founds = 0;
+			} return lastFound;
+		}
 	};
 
-	public ref class StringSearch
+	public ref class StringSearch24
 		: public IDataParser<String^,UInt24>
 	{
 	private:
@@ -286,20 +305,28 @@ namespace Yps
 			virtual bool get(void) override { return founds == bucket->Length; }
 		}
 
-		property int Frame {
-			virtual int get(void) { return Found ? actual : -1; }
+		property int Offset {
+			virtual int get(void) = IDataParser<String^,UInt24>::Offset::get {
+				if (Found) {
+					return ( 3 + ( actual - (search->Length % 3) ) ) % 3;
+				} else return -1;
+			}
+		}
+
+		virtual int FoundAt( int currentFrame ) override {
+			return 1 + ( ( currentFrame - (search->Length / 3) ) * 3 ) + Offset;
 		}
 
 		property String^ Sequence {
-			virtual String^ get(void) override { return search; }
-			virtual void set(String^ value) override {
+			virtual String^ get( void ) override { return search; }
+			virtual void set( String^ value ) override {
 				search = value;
-				bucket = gcnew array<wchar_t>(search->Length);
+				bucket = gcnew array<wchar_t>( search->Length );
 				founds = 0;
 			}
 		}
 
-		StringSearch( String^ searchForSequence ) {
+		StringSearch24( String^ searchForSequence ) {
 			Sequence = searchForSequence;
 		}
 
@@ -315,12 +342,21 @@ namespace Yps
 			return false;
 		}
 
-		virtual UInt24 Next(UInt24 next) override {
+		virtual UInt24 Check( UInt24 next ) override {
 			framed.bin = next;
 			for (int i = 0; i < 3; ++i)
 				if ( nextCharacter( framed[i] ) )
 					if (Found) return actual = i;
 			return next;
+		}
+
+		virtual bool Next( void ) override {
+			bool lastFound = Found;
+			if ( lastFound ) {
+				bucket->Clear(bucket,0,bucket->Length);
+				framed.bin = UInt24::MinValue;
+				founds = 0;
+			} return lastFound;
 		}
 	};
 
