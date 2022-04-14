@@ -22,6 +22,6 @@ TestSuite test = new CrypsTests(
     Args.Contains("--xml")
 ).Run();
 
-return test.wasErrors() ?
-  -1 : test.hasPassed() ?
-   0 : test.getFailures();
+return test.wasErrors() ? -1
+     : test.hasPassed() ?  0
+     : test.getFailures();

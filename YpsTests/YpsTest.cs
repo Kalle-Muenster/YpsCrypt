@@ -252,7 +252,7 @@ namespace Yps
             while( innerer.MoveNext() ) {
                 innerer.Current = dat[dat.DataIndex++];
             }
-            // TODO verify resulting dat buffer got encrypted correctly
+            // TODO verify dat buffer got encrypted correctly
             
             dat.DataIndex = 4;
             innerer.Reset();
@@ -260,7 +260,7 @@ namespace Yps
                 dat[dat.DataIndex] = innerer.Current;
             }
 
-            // Todo verify resulting dat buffer got decrypted back corectly
+            // Todo verify dat buffer got decrypted back corectly
         }
        
 

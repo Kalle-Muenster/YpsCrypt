@@ -14,10 +14,15 @@ using namespace Stepflow;
 
 namespace Yps
 {
-	public enum class CrypsFlags : unsigned char {
-		Binary = 0x10, Base64 = 0x40,
-		Encrypt = 1, Decrypt = 2,
-		InnerCryptic = 4, OuterCryptic = 8
+	public enum class CrypsFlags
+		: unsigned char
+	{
+		Encrypt      = 0x01,
+		Decrypt      = 0x02,
+		InnerCryptic = 0x04,
+		OuterCryptic = 0x08,
+		Binary       = 0x10,
+		Base64       = 0x40
 	};
 
 	ref class CryptKey;
@@ -45,6 +50,7 @@ namespace Yps
 		generic<class T> where T : ValueType
 		ref class Enumerator abstract
 		{
+
 		protected:
 			int          start;
 			int          stopt;
@@ -87,9 +93,11 @@ namespace Yps
 		ref class Cryptator abstract
 		: public Enumerator<C>
 		{
+
 		protected:
 			CryptKey^    key;
-			Cryptator( CryptBuffer^ instance, CryptKey^ useKey, int offset ) : Enumerator<C>(instance,offset) {
+			Cryptator( CryptBuffer^ instance, CryptKey^ useKey, int offset )
+				: Enumerator<C>(instance,offset) {
 				key = useKey;
 				start = offset;
 				stopt = instance->GetElements() - start;
@@ -131,8 +139,7 @@ namespace Yps
 		};
 
 		ref class UInt24Enumerator
-			: public Enumerator<UInt24>
-		{
+			: public Enumerator<UInt24>	{
 		public:
 			UInt24Enumerator(CryptBuffer^ init,int oset)
 			: Enumerator<UInt24>( init, oset ) {
@@ -152,8 +159,7 @@ namespace Yps
 		};
 
 		ref class Base64Enumerator
-			: public CryptBuffer::Enumerator<CryptFrame>
-		{
+			: public CryptBuffer::Enumerator<CryptFrame> {
 		public:
 			Base64Enumerator(CryptBuffer^ init, int oset)
 			: Enumerator<CryptFrame>(init, oset) {
@@ -173,8 +179,7 @@ namespace Yps
 		};
 
 		ref class InnerCrypticEnumerator
-			: public Cryptator<UInt24,UInt24>
-		{
+			: public Cryptator<UInt24,UInt24> {
 		public:
 			InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
@@ -186,20 +191,19 @@ namespace Yps
 		};
 
 		ref class OuterCrypticEnumerator
-			: public CryptBuffer::Cryptator<UInt24,UInt24>
-		{
+			: public CryptBuffer::Cryptator<UInt24,UInt24> {
 		public:
 			IParser<UInt24>^ Search;
 
-			OuterCrypticEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
+			OuterCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
 			property UInt24 Current {
 				virtual UInt24 get(void) override;
 				virtual void set(UInt24 value) override;
 			}
 
-			virtual bool MoveNext(void) override {
-				if (Search != nullptr) {
+			virtual bool MoveNext( void ) override {
+				if( Search != nullptr ) {
 					if ( Cryptator<UInt24,UInt24>::MoveNext() ) {
 						return !Search->Parse( Current );
 					} else return false;
@@ -237,8 +241,8 @@ namespace Yps
 			}
 
 			virtual bool MoveNext(void) override {
-				if (Search != nullptr) {
-					if ( Cryptator<UInt32,UInt24>::MoveNext() ) {
+				if( Search != nullptr ) {
+					if( Cryptator<UInt32,UInt24>::MoveNext() ) {
 						return !Search->Parse( Current );
 					} else return false;
 				} else return Cryptator<UInt32,UInt24>::MoveNext();
@@ -263,8 +267,6 @@ namespace Yps
 			this->count = newBuffer->Length;
 		}
 
-
-
 		generic<class T> where T : ValueType
         array<T>^ GetCopy(void);
 
@@ -272,18 +274,18 @@ namespace Yps
 		virtual Enumerator<T>^ GetEnumerator();
 
 		generic<class T> where T : ValueType
-		virtual Enumerator<T>^ GetEnumerator(int offsetTs);
+		virtual Enumerator<T>^ GetEnumerator( int offsetTs );
 
 		generic<class T,class C> where T : ValueType where C : ValueType
 		virtual Cryptator<T,C>^ GetCryptCallEnumerator( CryptKey^ use, CrypsFlags Mode );
 
 		generic<class T, class C> where T : ValueType where C : ValueType
-		virtual Cryptator<T, C>^ GetCryptCallEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs);
+		virtual Cryptator<T, C>^ GetCryptCallEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs );
 
 		InnerCrypticEnumerator^ GetInnerCrypticEnumerator( CryptKey^ use, int offset );
 		OuterCrypticEnumerator^ GetOuterCrypticEnumerator( CryptKey^ use, int offset );
-		InnerCrypticStringEnumerator^ GetInnerCrypticStringEnumerator(CryptKey^ use, int offset);
-		OuterCrypticStringEnumerator^ GetOuterCrypticStringEnumerator(CryptKey^ use, int offset);
+		InnerCrypticStringEnumerator^ GetInnerCrypticStringEnumerator( CryptKey^ use, int offset );
+		OuterCrypticStringEnumerator^ GetOuterCrypticStringEnumerator( CryptKey^ use, int offset );
 
 		IntPtr GetPointer() {
 			return data;

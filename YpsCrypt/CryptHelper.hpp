@@ -180,7 +180,8 @@ namespace Yps
 
 
 	generic<class E>
-	public interface class IParser {
+	public interface class IParser
+	{
 	public:
 		property bool Found { bool get(void) = 0; }
 		property int Frame { int get(void) = 0; }
@@ -272,7 +273,7 @@ namespace Yps
 		String^         search;
 		int             actual;
 
-		bool nextCharacter(wchar_t next) {
+		bool nextCharacter( wchar_t next ) {
 			if (Found) return true;
 			int current = founds;
 			if (search[founds] == next) bucket[founds++] = next;
@@ -309,7 +310,7 @@ namespace Yps
 		virtual bool Parse( UInt24 next ) override {
 			framed.bin = next;
 			for (actual = 0; actual < 3; ++actual)
-				if (nextCharacter((char)framed[actual]))
+				if ( nextCharacter( (char)framed[actual] ) )
 					if (Found) return true;
 			return false;
 		}

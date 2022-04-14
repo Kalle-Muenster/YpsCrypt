@@ -51,7 +51,7 @@ Yps::Cleansener::Weggeloescht( bool sollwech )
 
 
 //////////////////////////////////
-/// CryptKey
+/// CryptKey Structure
 
 
 Yps::CryptKey::CryptKey( const char* phrase )
@@ -101,7 +101,7 @@ Yps::CryptKey::~CryptKey(void)
 }
 
 bool
-Yps::CryptKey::IsValid(void)
+Yps::CryptKey::IsValid( void )
 {
     bool valid = k != IntPtr::Zero;
     if ( valid ) valid = Hash > 0;
@@ -151,9 +151,9 @@ Yps::CryptKey::Decrypt( String^ crypts )
     return IsValid() ? Crypt::DecryptString( this, crypts ) : crypts;
 }
 
-//////////////////////////////////
-/// CryptApi
 
+//////////////////////////////////
+/// Static CryptApi
 
 uint
 Yps::Crypt::GetVersionNumber()
@@ -325,13 +325,13 @@ Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
     int size_dst = size_src - 12;
     const int rest_dst = size_dst % sizeof(T);
     int null_dst = sizeof(T) - rest_dst;
-    array<T>^ Dst = gcnew array<T>((size_dst / sizeof(T)) + (rest_dst ? 1 : 0));
+    array<T>^ Dst = gcnew array<T>( (size_dst / sizeof(T) ) + (rest_dst ? 1 : 0));
     pin_ptr<T> src( &Src[0] );
     pin_ptr<T> dstT( &Dst[0] );
     byte* dst = (byte*)dstT;
     size_dst = crypt64_binary_decrypt( 
-        static_cast<K64*>(key->ToPointer()),
-        reinterpret_cast<const byte*>(src),
+        static_cast<K64*>( key->ToPointer() ),
+        reinterpret_cast<const byte*>( src ),
         size_src, dst );
     if ( check( size_dst ) ) {
         return nullptr;
@@ -366,7 +366,7 @@ Yps::Crypt::DecryptString( CryptKey^ key, String^ crypt_string )
 String^
 Yps::Crypt::EncryptString( CryptKey^ key, String^ plain_string )
 {
-    String^ bytes = Encrypt(key, System::Text::Encoding::Default->GetBytes(plain_string));
+    String^ bytes = Encrypt( key, System::Text::Encoding::Default->GetBytes( plain_string ) );
     if (bytes == nullptr) return nullptr;
 	return bytes->TrimEnd();
 }
@@ -742,8 +742,8 @@ Yps::CryptBuffer::InnerCrypticEnumerator::InnerCrypticEnumerator( CryptBuffer^ i
 Yps::CryptBuffer::OuterCrypticEnumerator::OuterCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
 	: Cryptator<UInt24,UInt24>(init, use, oset)
 {
-    if (!Crypt::BeginDe24(use, use->currentHdr()))
-        throw gcnew Exception("invalid key");
+    if( !Crypt::BeginDe24( use, use->currentHdr() ) )
+        throw gcnew Exception( "invalid key" );
 }
 
 
@@ -769,7 +769,7 @@ UInt24 Yps::CryptBuffer::OuterCrypticStringEnumerator::Current::get(void) {
 }
 
 void  Yps::CryptBuffer::OuterCrypticStringEnumerator::Current::set(UInt24 value) {
-    *((UInt32*)current.ToPointer() + position) = Crypt::EncryptFrame64(key, value);
+    *((UInt32*)current.ToPointer() + position) = Crypt::EncryptFrame64( key, value );
 }
 
 Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
