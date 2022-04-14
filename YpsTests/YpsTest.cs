@@ -266,31 +266,57 @@ namespace Yps
 
         private void outerCryptics()
         {
+            NextCase( "OuterCrypticEnumerator" );
+
             // prepare a buffer containing cryptic data where the test will search
-            // possition of a small portion of given cleartext data within it.  
-            NextCase( "OuterCryptic Buffer Enumerator" );
-            string cleartext = "then return so obtained UInt24 positional index which should point";
+            // possitions of small portions of given cleartext data within it.  
+            string cleartext = "Chicken with Text: Banana is Info! - Banana with Data: Banana is Gelb!";
+            int[] expectations = new int[] { 19, 37, 55, -1 };
             byte[] cryptical = Encoding.Default.GetBytes( cleartext );
             CryptBuffer buffer = new CryptBuffer( cryptical );
             CryptBuffer header = Crypt.Encrypt24( keypassa, buffer, true );
             int equals = 0;
             for ( int i = 0; i < cleartext.Length; ++i ) {
                 if (cryptical[i] == cleartext[i]) ++equals;
-            } if( equals >= 2 ) FailStep( "testdata incorrectly prepared" );
+            } if (equals >= 2) FailStep("testdata incorrectly prepared");
+            else {
+                InfoStep("encrypted string:\n             {0}", cleartext );
+            }
 
-            // testing the enumerator if it can find a searchd word within cryptic data
+            // test if the enumerator can find searched phrases of text within cryptic data
             CryptBuffer.OuterCrypticEnumerator enumerator = buffer.GetOuterCrypticEnumerator(keypassa, 0);
-            // parse each frames 3 bytes for clear text search of word 'UInt24'
-            // and break the loop as soon the parser encounters the search text
-            enumerator.Search = new StringSearch( "UInt24" );
-            while( enumerator.MoveNext() );
+            
+            // attach a parser which can find ocurrences of word: 'Banana' within parsed text content
+            enumerator.Search = new StringSearch24( "Banana" );
 
-            // calculate the exact byte index at which the searched word begins in the cryptic data
-            int foundPosition = ((enumerator.Position - ((enumerator.Search as StringSearch).Sequence.Length / 3)) + 1) * 3;
+            // verify that enumerator finds all three ocurences of search text 'Banana' and
+            // veryfy that each occurence is finds is located at expected byte indices
+            int[] foundAtByteIndex = new int[4];
+            for( int i = 0; i <= 3; ++i ) {
+       
+                // start running a while loop until the enumerator stops moving
+                while ( enumerator.MoveNext() );
+                
+                if ( i < 3 ) {
+                // as soon it stops veryfy that indeed it stopped in fact of parser found text 
+                CheckStep( enumerator.Search.Found,
+                    $"enumerator found search text 'Banana' within cryptic data" );
 
-            // and log result of comparing the position it found against the expected value 
-            MatchStep( foundPosition, 24, "position of searched cleartext portion within a cryptic data buffer" );
-            CloseCase( CurrentCase );
+                // veryfy that parser found correct byte index inside the buffer as expected
+                foundAtByteIndex[i] = enumerator.Search.FoundAt(enumerator.Position);
+                MatchStep( foundAtByteIndex[i], expectations[i],
+                    "start index of searched clear text portion" );
+                }
+                if ( !enumerator.Search.Next() ) {
+                    // When the Search.Next() returns 'true' would mean before MoveNext() call
+                    // has returned 'false' for signaling an attached IParser found searchtext
+                    // in case Search.Next() returns 'false' would mean before MoveNext() call
+                    // has returned 'false' by some other reason then IParser found searchtext
+                    foundAtByteIndex[i] = -1;
+                    // veryfy that parser doesn't signals search text found in case buffer end
+                    CheckStep( i == 3, $"enumerator finds exactly {3} ocurrences of search text" );
+                }
+            } CloseCase( CurrentCase );
         }
 
         public void deInitialization()
