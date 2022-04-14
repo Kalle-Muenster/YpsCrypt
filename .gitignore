@@ -1,0 +1,7 @@
+bin*
+*/obj*
+.vs*
+*.vc.db
+*/x64
+*/x86
+*/linkage*
