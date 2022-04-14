@@ -12,11 +12,15 @@ cd %CD%\YpsCrypt\YpsTests
 del /f /s /q "%_link_%\*.*"
 echo copy /y /b "%_24er_%\Int24Types.dll" "%_link_%"
      copy /y /b "%_24er_%\Int24Types.dll" "%_link_%"
+echo copy /y /b "%_test_%\Consola.dll" "%_link_%"
+	 copy /y /b "%_test_%\Consola.dll" "%_link_%"
 echo copy /y /b "%_test_%\Consola.Tests.dll" "%_link_%"
 	 copy /y /b "%_test_%\Consola.Tests.dll" "%_link_%"
 if "%_conf_%" == "Debug" (
 echo copy /y /b "%_24er_%\Int24Types.pdb" "%_link_%"
 	 copy /y /b "%_24er_%\Int24Types.pdb" "%_link_%"
+echo copy /y /b "%_test_%\Consola.pdb" "%_link_%"
+     copy /y /b "%_test_%\Consola.pdb" "%_link_%"
 echo copy /y /b "%_test_%\Consola.Tests.pdb" "%_link_%"
      copy /y /b "%_test_%\Consola.Tests.pdb" "%_link_%"
 )

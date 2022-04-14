@@ -77,11 +77,11 @@
 
   <ItemGroup>
     <Reference Include="Consola">
-      <HintPath>..\..\Int24Types\core5\Int24Tests\linkage\Consola.dll</HintPath>
+      <HintPath>linkage\Consola.dll</HintPath>
       <Private>true</Private>
     </Reference>
     <Reference Include="Consola.Tests">
-      <HintPath>..\..\Int24Types\core5\Int24Tests\linkage\Consola.Tests.dll</HintPath>
+      <HintPath>linkage\Consola.Tests.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup>
