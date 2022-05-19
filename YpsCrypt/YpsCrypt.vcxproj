@@ -77,24 +77,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <OutDir>$(ProjectDir)..\bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <OutDir>$(ProjectDir)..\bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
+    <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>.\;c:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <OutDir>$(ProjectDir)..\bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <OutDir>$(ProjectDir)..\bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
+    <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -108,15 +112,10 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <RegisterOutput>false</RegisterOutput>
       <Version>00000001</Version>
-      <PreventDllBinding>true</PreventDllBinding>
+      <PreventDllBinding>false</PreventDllBinding>
     </Link>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
     <Manifest>
-      <AssemblyIdentity>
-      </AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.1, Culture=neutral, processorArchitecture=x86</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -131,15 +130,10 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <RegisterOutput>false</RegisterOutput>
       <Version>00000001</Version>
-      <PreventDllBinding>true</PreventDllBinding>
+      <PreventDllBinding>false</PreventDllBinding>
     </Link>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
     <Manifest>
-      <AssemblyIdentity>
-      </AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.1, Culture=neutral, processorArchitecture=AMD64</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -155,15 +149,10 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <RegisterOutput>false</RegisterOutput>
       <Version>00000001</Version>
-      <PreventDllBinding>true</PreventDllBinding>
+      <PreventDllBinding>false</PreventDllBinding>
     </Link>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
     <Manifest>
-      <AssemblyIdentity>
-      </AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.1, Culture=neutral, processorArchitecture=x86</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -179,15 +168,10 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <Version>00000001</Version>
       <RegisterOutput>false</RegisterOutput>
-      <PreventDllBinding>true</PreventDllBinding>
+      <PreventDllBinding>false</PreventDllBinding>
     </Link>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
     <Manifest>
-      <AssemblyIdentity>
-      </AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.1, Culture=neutral, processorArchitecture=AMD64</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -217,12 +201,9 @@
     <Image Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="copyLinkage.bat" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Int24Types\core5\Int24Type\Int24Type.vcxproj">
-      <Project>{80256676-d858-4ba1-8fcd-f49edd2f1e51}</Project>
-    </ProjectReference>
+    <Reference Include="Int24Types">
+      <HintPath>$(Int24TypesBinRoot)\$(PlatformTarget)\$(Configuration)\Int24Types.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

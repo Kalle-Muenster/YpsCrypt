@@ -1,46 +1,11 @@
 {
   "version": 3,
   "targets": {
-    "net5.0": {
-      "Int24Types/1.0.0": {
-        "type": "project",
-        "compile": {
-          "bin/placeholder/Int24Types.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/Int24Types.dll": {}
-        }
-      },
-      "YpsCrypt/1.0.0": {
-        "type": "project",
-        "dependencies": {
-          "Int24Types": "1.0.0"
-        },
-        "compile": {
-          "bin/placeholder/YpsCrypt.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/YpsCrypt.dll": {}
-        }
-      }
-    }
+    "net5.0": {}
   },
-  "libraries": {
-    "Int24Types/1.0.0": {
-      "type": "project",
-      "path": "../../Int24Types/core5/Int24Type/Int24Type.vcxproj",
-      "msbuildProject": "../../Int24Types/core5/Int24Type/Int24Type.vcxproj"
-    },
-    "YpsCrypt/1.0.0": {
-      "type": "project",
-      "path": "../YpsCrypt/YpsCrypt.vcxproj",
-      "msbuildProject": "../YpsCrypt/YpsCrypt.vcxproj"
-    }
-  },
+  "libraries": {},
   "projectFileDependencyGroups": {
-    "net5.0": [
-      "YpsCrypt >= 1.0.0"
-    ]
+    "net5.0": []
   },
   "packageFolders": {
     "C:\\Users\\kalle\\.nuget\\packages\\": {},
@@ -50,9 +15,9 @@
   "project": {
     "version": "0.0.0.1",
     "restore": {
-      "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj",
+      "projectUniqueName": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTests.csproj",
       "projectName": "Yps.Crypt",
-      "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj",
+      "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTests.csproj",
       "packagesPath": "C:\\Users\\kalle\\.nuget\\packages\\",
       "outputPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\obj\\",
       "projectStyle": "PackageReference",
@@ -77,11 +42,7 @@
       "frameworks": {
         "net5.0": {
           "targetAlias": "net5.0",
-          "projectReferences": {
-            "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj": {
-              "projectPath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsCrypt\\YpsCrypt.vcxproj"
-            }
-          }
+          "projectReferences": {}
         }
       },
       "warningProperties": {
@@ -108,7 +69,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.203\\RuntimeIdentifierGraph.json"
       }
     }
   }

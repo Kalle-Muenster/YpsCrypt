@@ -52,9 +52,4 @@
       <Filter>Ressourcendateien</Filter>
     </Image>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="copyLinkage.bat">
-      <Filter>Quelldateien</Filter>
-    </None>
-  </ItemGroup>
 </Project>

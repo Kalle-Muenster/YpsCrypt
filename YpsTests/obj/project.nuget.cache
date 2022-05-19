@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "1fAWB+g/wxCvF3Gmaz18wqtnR69lWuksdFpTgHWC97FL1PTiBghY8fta43BkN5oZBeu/3QXvHKyJ/Y0aLKYHqw==",
+  "dgSpecHash": "BnTeEOAkFMSHDBIGVgbhpMw4r8i0jlymXiwW0RP9AWstmi6YkermBIvbMvJK1I2QaIGVol10xk3DO3uyuBLdew==",
   "success": true,
-  "projectFilePath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTest.csproj",
+  "projectFilePath": "C:\\WORKSPACE\\PROJECTS\\GITSPACE\\YpsCrypt\\YpsTests\\YpsTests.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
