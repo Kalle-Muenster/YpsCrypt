@@ -2,7 +2,7 @@
 /////////////////////////////////
 
 using Consola;
-using Consola.Tests;
+using Consola.Test;
 using System.Collections.Generic;
 using Yps;
 
@@ -16,7 +16,7 @@ StdStream.Init(
     CreationFlags.CreateLog
 );
 
-TestSuite test = new CrypsTests(
+Test test = new CrypsTests(
     Args.Contains("-v") ||
     Args.Contains("--verbose"),
     Args.Contains("--xml")

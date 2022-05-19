@@ -3,12 +3,12 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Consola;
-using Consola.Tests;
+using Consola.Test;
 using Stepflow;
 
 namespace Yps
 {
-    public class CrypsTests : TestSuite
+    public class CrypsTests : Test
     {
         private CryptKey keypassa = Crypt.CreateKey("invalid");
         private string testdata;
@@ -37,7 +37,10 @@ namespace Yps
         }
 
         public CrypsTests( bool verbose, bool xml ) : base( verbose, xml )
-        { }
+        {
+            TestRun += outerCryptics;
+            TestRun += deInitialization;
+        }
 
         private void printVersionNumber()
         {
@@ -119,11 +122,11 @@ namespace Yps
             CloseCase( CurrentCase );
         }
 
-        protected void failingKeys( string wrongpassphrase )
+        protected void failingKeys()
         {
             NextCase("Decrypting by wrong Key");
-            CryptKey wrongkey = Crypt.CreateKey( wrongpassphrase );
-            CheckStep( wrongkey.IsValid(), "creating a key by wrong passphrase: '{0}'", wrongpassphrase );
+            CryptKey wrongkey = Crypt.CreateKey( "ThisIsWrongPassWord" );
+            CheckStep( wrongkey.IsValid(), "creating a key by wrong passphrase: '{0}'", "ThisIsWrongPassWord" );
             binbacks = Crypt.Decrypt<byte>( wrongkey, b64crypt );
             string result = "";
             if (binbacks == null)
@@ -138,24 +141,36 @@ namespace Yps
 
         protected void mistakingFormat()
         {
+            // try binary decryption of base64 encoded cryptic data input:
             NextCase( "Decrypting wrong data Format" );
             binbacks = Crypt.BinaryDecrypt<byte>( keypassa, Encoding.ASCII.GetBytes( b64crypt ) );
+
+            // and ensure no output data is returned but error message is generated instead:
             CheckStep( binbacks == null, "calling Yps.Crypt.BinaryDecrypt() returned {0}", Crypt.Error.ToString() );
             CloseCase( CurrentCase );
         }
 
         protected void cryptingErrors()
         {
-            failingKeys( "WrongPassWord" );
+            failingKeys( );
             mistakingFormat();
         }
 
         protected void cryptingStrings()
         {
+            // try encrypting plain strings to cryptic base64 data
             NextCase( "Encrypting" );
-            b64crypt = Crypt.Encrypt( keypassa, bytesbin ).Substring(0,expected.Length);
+
+            // encrypt the plain text string from testdata set 
+            b64crypt = Crypt.Encrypt( keypassa, bytesbin ).Substring( 0, expected.Length );
+
+            // ensure no errors are caused
             CheckStep( b64crypt != null, "calling Yps.Crypt.Encrypt() returned " + Crypt.Error.ToString() );
+
+            // ensure cryptic base64 output data got expected length 
             MatchStep( b64crypt.Length, expected.Length, "data size", "byte" );
+
+            // compare encrypted data against the expected result from testdata set
             MatchStep( b64crypt, expected, "strings" );
             if( CloseCase( CurrentCase ) > 0 ) {
                 SkipCase( "Decrypting" );
@@ -164,7 +179,9 @@ namespace Yps
             }
         }
 
-        protected void decryptingStrings( string testcase ) {
+        protected void decryptingStrings( string testcase )
+        {
+            // try decrypting previously encrypted, base64 encoded testdata
             NextCase( testcase );
             binbacks = Crypt.Decrypt<byte>( keypassa, b64crypt );
             string result = "";
@@ -182,9 +199,14 @@ namespace Yps
 
         private void cryptingBinar()
         {
+            // try binary encrypting a data sample from the test data set 
             NextCase( "BinaryEncrypting" );
             bincrypt = Crypt.BinaryEncrypt( keypassa, bytesbin );
+
+            // ensure no errors are caused
             CheckStep( bincrypt != null, string.Format("calling Yps.Crypt.BinaryEncrypt() returned {0} bytes", bincrypt?.Length ));
+
+            // ensure generated output of expected size
             MatchStep( bincrypt?.Length , bytesbin.Length + 12, "data size", "byte" );
             if( CloseCase( CurrentCase ) > 0 ) {
                 SkipCase( "BinaryDecrypting" );
@@ -193,22 +215,32 @@ namespace Yps
             }
         }
 
-        private void decryptingBinar( string testname ) {
+        private void decryptingBinar( string testname )
+        {
+            // try binary decrypting a string that previously had been encrypted binary
             NextCase( testname );
             binbacks = Crypt.BinaryDecrypt<byte>( keypassa, bincrypt );
             string result = "";
+
+            // ensure operation was successive and no errors are caused
             if (binbacks == null )
                 FailStep( "calling Yps.Crypt.BinaryDecrypt() " + Crypt.Error.ToString() );
             else unsafe { fixed (byte* p = &binbacks[0]) {
                     result = new string((sbyte*)p, 0, bytesize, Encoding.ASCII);
                 } result = result.Trim();
+
+            // ensure resulting output returned is data of expected length
             PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", binbacks.Length ); }
+
+            // compare resulting output against expected data sample from the test data set
             MatchStep( result, testdata.Trim(), "decrypted data" );
             CloseCase( CurrentCase );
         }
         
         private void cryptingDirectly()
         {
+            // try directly encrypting a passed data buffer (means not returning a cryptic copy
+            // but encrypting the passed data buffer itself )
             NextCase( "Encrypt24" );
             UInt24 before = dat[3];
             CryptBuffer hdr24s = Crypt.Encrypt24( keypassa, dat );
@@ -225,9 +257,14 @@ namespace Yps
 
         private void decryptingDirectly( CryptBuffer header )
         {
+            // try directly decrypting cryptic data (means not returning a plaintext copy
+            // but instead decrypting that cryptic data within the containing buffer it self)
             NextCase( "Decrypt24" );
             UInt24 differentVor = dat[3], differentNach;
-            dat.SetDataType(typeof(byte));
+
+            // typecast the bufer to be reinterpreted as bytes
+            dat.SetDataType( typeof(byte) );
+
             int size = Crypt.Decrypt24( keypassa, header, dat );
             Crypt.StoptEn24( keypassa );
             differentNach = dat[3];
@@ -241,7 +278,9 @@ namespace Yps
                 FailStep( "calling Yps.Crypt.Decrypt24() returned: {0} byte", size );
             }
 
+            // compare decrypted buffer against the plaintext sample from the test data set
             MatchStep( dat.ToString(), testdata, "decrypted data" );
+
             CloseCase( CurrentCase );
         }
         
@@ -290,7 +329,7 @@ namespace Yps
             enumerator.Search = new StringSearch24( "Banana" );
 
             // verify that enumerator finds all three ocurences of search text 'Banana' and
-            // veryfy that each occurence is finds is located at expected byte indices
+            // veryfy that each occurence it finds is located at the expected byte position
             int[] foundAtByteIndex = new int[4];
             for( int i = 0; i <= 3; ++i ) {
        
@@ -298,14 +337,14 @@ namespace Yps
                 while ( enumerator.MoveNext() );
                 
                 if ( i < 3 ) {
-                // as soon it stops veryfy that indeed it stopped in fact of parser found text 
+                // as soon it stops veryfy that indeed it stopped in fact of finding the word 
                 CheckStep( enumerator.Search.Found,
-                    $"enumerator found search text 'Banana' within cryptic data" );
+                    $"enumerator found search text '{enumerator.Search.GetSearchedSequence()}' within cryptic data" );
 
                 // veryfy that parser found correct byte index inside the buffer as expected
-                foundAtByteIndex[i] = enumerator.Search.FoundAt(enumerator.Position);
+                foundAtByteIndex[i] = enumerator.Search.FoundAt( enumerator.Position );
                 MatchStep( foundAtByteIndex[i], expectations[i],
-                    "start index of searched clear text portion" );
+                    "start index of searched clear text" );
                 }
                 if ( !enumerator.Search.Next() ) {
                     // When the Search.Next() returns 'true' would mean before MoveNext() call
@@ -321,17 +360,13 @@ namespace Yps
 
         public void deInitialization()
         {
-            NextCase("DeInitialization");
-            try { Crypt.Init(false);
-            } catch( Exception ex ) {
-                setFatal( "De-Initialization caused a crash in the application: " + ex.Message, true );
-                CloseCase( CurrentCase );
-                return;
-            } PassStep( "De-Initialization caused no errors" );
+            NextCase( "DeInitialization" );
+            Crypt.Init(false);
+            PassStep( "De-Initialization caused no errors" );
             CloseCase( CurrentCase );
         }
 
-        protected override void Test()
+        protected override void TestSuite()
         {
             printVersionNumber();
 
@@ -347,9 +382,9 @@ namespace Yps
             cryptingBinar();
             cryptingDirectly();
 
-            outerCryptics();
+           // outerCryptics();
 
-            deInitialization();
+           // deInitialization();
 
         }
    

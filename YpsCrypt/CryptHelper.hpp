@@ -187,6 +187,7 @@ namespace Yps
 		property int Offset { int get(void) = 0; }
 		int  FoundAt( int actualFrameIndex ) = 0;
 		void SetSearchedSequence( Object^ sequence ) = 0;
+		Object^ GetSearchedSequence( void ) = 0;
 		bool Next( void ) = 0;
 		bool Parse( E next ) = 0;
 		E Check( E next ) = 0;
@@ -240,6 +241,10 @@ namespace Yps
 
 		virtual void SetSearchedSequence( Object^ sequence ) {
 			Sequence = (array<byte>^)sequence;
+		}
+
+		virtual Object^ GetSearchedSequence( void ) {
+			return Sequence;
 		}
 
 		property array<byte>^ Sequence {
@@ -332,6 +337,10 @@ namespace Yps
 
 		virtual void SetSearchedSequence( Object^ sequence ) {
 			Sequence = (String^)sequence;
+		}
+
+		virtual Object^ GetSearchedSequence( void ) {
+			return Sequence;
 		}
 
 		virtual bool Parse( UInt24 next ) override {
