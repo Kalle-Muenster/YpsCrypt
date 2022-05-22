@@ -2,7 +2,6 @@
 if not "%~1"=="ParameterCleanUp" goto CHECK_ARGS
 
 :CLEAN_UP_ARGS
-set DotNetVersionString=
 set _target_=
 set _build_=
 set _clean_=
