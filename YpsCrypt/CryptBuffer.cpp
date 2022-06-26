@@ -126,7 +126,7 @@ Yps::CryptBuffer::Enumerator<T>^ Yps::CryptBuffer::GetEnumerator()
 }
 
 generic<class T> where T : ValueType
-Yps::CryptBuffer::Enumerator<T>^ Yps::CryptBuffer::GetEnumerator(int offsetTs)
+Yps::CryptBuffer::Enumerator<T>^ Yps::CryptBuffer::GetEnumerator( int offsetTs )
 {
 	switch ( Marshal::SizeOf<T>() ) {
 	case 1: return (Enumerator<T>^)gcnew Bytes1Enumerator(this,offsetTs);

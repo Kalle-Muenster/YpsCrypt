@@ -46,7 +46,7 @@ namespace Yps
 			return bin;
 		}
 
-		property unsigned char default[int]{
+		property unsigned char default[int] {
 			unsigned char get(int idx) { interior_ptr<unsigned char> p(&dat); return *(p + idx); }
 			void set(int idx, unsigned char value) { interior_ptr<unsigned char> p(&dat); *(p + idx) = value; }
 		}
@@ -135,6 +135,8 @@ namespace Yps
 	public:
 
 		const static Error NoError = Error( 0, "No Error" );
+		static String^ GetText(int error);
+
 		virtual String^ ToString( void ) override;
 
 		property int Code {
@@ -183,14 +185,31 @@ namespace Yps
 	public interface class IParser
 	{
 	public:
-		property bool Found { bool get(void) = 0; }
-		property int Offset { int get(void) = 0; }
-		int  FoundAt( int actualFrameIndex ) = 0;
-		void SetSearchedSequence( Object^ sequence ) = 0;
-		Object^ GetSearchedSequence( void ) = 0;
-		bool Next( void ) = 0;
-		bool Parse( E next ) = 0;
-		E Check( E next ) = 0;
+		property bool Found { bool get(void) abstract; }
+		property int Offset { int get(void) abstract; }
+
+		// translate an enumerators actual index position to a byte
+		// index position where last found search text match begins
+		int  FoundAt( int actualEnumeratorPosition ) abstract;
+
+		// setup a search 'verb' which makes enumerator stopping
+		// as soon matching portion is found within cryptic data  
+		void SetSequence( Object^ sequence ) abstract;
+		Object^ GetSequence( void ) abstract;
+
+		// Prepares the search parser for searching for further 
+		// ocurrences of same search verb after finding a match
+		bool Next( void ) abstract;
+
+		// parses the next element ('Current' element) in progress
+		// returns: 'true' if search text is encounterd. otherwise 'false'.
+		bool Parse( E next ) abstract;
+
+		// same like Parse() does, but returns just the passed current
+		// element as is. information about serach text was encounterd
+		// can be obtained via the 'Found' property which turns 'true' 
+		// with encontering the serch text.
+		E Check( E next ) abstract;
 	};
 
 	// interface for parsers which search in buffers of type 'T'
@@ -201,7 +220,10 @@ namespace Yps
 	public interface class IDataParser : public IParser<E>
 	{
 	public:
-		property T Sequence { T get(void) = 0; void set(T) = 0; }
+		property T Sequence {
+			T get(void) abstract;
+			void set(T) abstract;
+		}
 	};
 
 	public ref class DataSearch24
@@ -223,24 +245,29 @@ namespace Yps
 		}
 
 	public:
-		property bool Found {
-			virtual bool get(void) override { return founds == bucket->Length; }
-		}
 
 		property int Offset {
 			virtual int get(void) = IDataParser<array<byte>^,UInt24>::Offset::get {
 				if (Found) {
-					return (3 + (actual - (search->Length % 3))) % 3;
-				}
-				else return -1;
+					return (3 + ( actual - (search->Length % 3) ) ) % 3;
+				} else return -1;
 			}
 		}
-		virtual int FoundAt( int framePosition ) override {
-			return 1 + ( ( framePosition - (search->Length / 3) ) * 3 ) + Offset;
+
+		property bool Found {
+			virtual bool get(void) { return founds == bucket->Length; }
 		}
 
-		virtual void SetSearchedSequence( Object^ sequence ) {
-			Sequence = (array<byte>^)sequence;
+		virtual int FoundAt( int currentEnumeratorPosition ) {
+			return 1 + ( ( currentEnumeratorPosition - (search->Length / 3) ) * 3 ) + Offset;
+		}
+
+		virtual void SetSequence( Object^ sequence ) = IDataParser<array<byte>^,UInt24>::SetSequence {
+			Sequence = safe_cast<array<byte>^>( sequence );
+		}
+
+		virtual Object^ GetSequence( void ) = IDataParser<array<byte>^,UInt24>::GetSequence {
+			return Sequence;
 		}
 
 		virtual Object^ GetSearchedSequence( void ) {
@@ -248,8 +275,8 @@ namespace Yps
 		}
 
 		property array<byte>^ Sequence {
-			virtual array<byte>^ get(void) override { return search; }
-			virtual void set( array<byte>^ value ) override {
+			virtual array<byte>^ get(void) { return search; }
+			virtual void set( array<byte>^ value ) {
 				search = gcnew array<byte>( value->Length );
 				bucket = gcnew array<byte>( value->Length );
 				System::Array::Copy( value, search, value->Length );
@@ -261,7 +288,7 @@ namespace Yps
 			Sequence = searchForSequence;
 		}
 
-		virtual bool Parse( UInt24 next ) override {
+		virtual bool Parse( UInt24 next ) {
 			framed.bin = next;
 			for (actual = 0; actual < 3; ++actual)
 				if ( nextByte( framed[actual] ) )
@@ -269,15 +296,16 @@ namespace Yps
 			return false;
 		}
 
-		virtual UInt24 Check( UInt24 next ) override {
+		virtual UInt24 Check( UInt24 next ) {
 			framed.bin = next;
 			for ( int i = 0; i < 3; ++i )
 				if ( nextByte( framed[i] ) )
-					if (Found) return actual = i;
+					if( Found ) { actual = i;
+						break; }
 			return next;
 		}
 
-		virtual bool Next( void ) override {
+		virtual bool Next( void ) {
 			bool lastFound = Found;
 			if ( lastFound ) {
 				bucket->Clear( bucket, 0, bucket->Length );
@@ -306,25 +334,26 @@ namespace Yps
 		}
 
 	public:
-		property bool Found {
-			virtual bool get(void) override { return founds == bucket->Length; }
-		}
 
 		property int Offset {
-			virtual int get(void) = IDataParser<String^,UInt24>::Offset::get {
+			virtual int get( void ) = IDataParser<String^,UInt24>::Offset::get {
 				if (Found) {
-					return ( 3 + ( actual - (search->Length % 3) ) ) % 3;
+					return (3 + (actual - (search->Length % 3))) % 3;
 				} else return -1;
 			}
 		}
 
-		virtual int FoundAt( int currentFrame ) override {
+		property bool Found {
+			virtual bool get(void) { return founds == bucket->Length; }
+		}
+
+		virtual int FoundAt( int currentFrame ) {
 			return 1 + ( ( currentFrame - (search->Length / 3) ) * 3 ) + Offset;
 		}
 
 		property String^ Sequence {
-			virtual String^ get( void ) override { return search; }
-			virtual void set( String^ value ) override {
+			virtual String^ get( void ) { return search; }
+			virtual void set( String^ value ) {
 				search = value;
 				bucket = gcnew array<wchar_t>( search->Length );
 				founds = 0;
@@ -335,15 +364,15 @@ namespace Yps
 			Sequence = searchForSequence;
 		}
 
-		virtual void SetSearchedSequence( Object^ sequence ) {
-			Sequence = (String^)sequence;
+		virtual void SetSequence( Object^ sequence ) = IDataParser<String^,UInt24>::SetSequence {
+			Sequence = safe_cast<String^>( sequence );
 		}
 
-		virtual Object^ GetSearchedSequence( void ) {
+		virtual Object^ GetSequence( void ) = IDataParser<String^,UInt24>::GetSequence {
 			return Sequence;
 		}
 
-		virtual bool Parse( UInt24 next ) override {
+		virtual bool Parse( UInt24 next ) {
 			framed.bin = next;
 			for (actual = 0; actual < 3; ++actual)
 				if ( nextCharacter( (char)framed[actual] ) )
@@ -351,15 +380,16 @@ namespace Yps
 			return false;
 		}
 
-		virtual UInt24 Check( UInt24 next ) override {
+		virtual UInt24 Check( UInt24 next ) {
 			framed.bin = next;
 			for (int i = 0; i < 3; ++i)
 				if ( nextCharacter( framed[i] ) )
-					if (Found) return actual = i;
+					if( Found ) { actual = i;
+						break; }
 			return next;
 		}
 
-		virtual bool Next( void ) override {
+		virtual bool Next( void ) {
 			bool lastFound = Found;
 			if ( lastFound ) {
 				bucket->Clear(bucket,0,bucket->Length);

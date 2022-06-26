@@ -32,7 +32,7 @@ namespace Yps {
 		static unsigned long long CalculateHash( array<unsigned char>^ data );
 		static unsigned long long CalculateHash( String^ string );
 		static CryptKey^ CreateKey( String^ pass );
-		static CryptKey^ CreateKey( unsigned long long hashpass );
+		static CryptKey^ CreateKey( unsigned long long passhash );
 		static CryptBuffer^ CreateHeader( CryptKey^ key, CrypsFlags mod );
 
 		generic<class T> where T : ValueType

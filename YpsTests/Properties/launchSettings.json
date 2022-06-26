@@ -2,6 +2,7 @@
   "profiles": {
     "YpsCryps": {
       "commandName": "Project",
+      "commandLineArgs": "-v",
       "nativeDebugging": true
     }
   }

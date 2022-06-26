@@ -15,3 +15,4 @@ Yps::Error::ToString( void )
         Error::typeid->FullName, code.ToString(), text
     );
 }
+

@@ -221,9 +221,8 @@ namespace Yps
 
             // ensure resulting output returned is data of expected length
             PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", binbacks.Length ); }
-
-            // compare resulting output against expected data sample from the test data set
-            MatchStep( result, testdata.Trim(), "decrypted data" );
+            MatchStep( result, testdata, "decrypted data" );
+            CloseCase( CurrentCase );
         }
 
         private void encryptingDirectly()
@@ -329,19 +328,19 @@ namespace Yps
                 while ( enumerator.MoveNext() );
 
                 if ( i < 3 ) {
-                 // as soon it stops veryfy that indeed it stopped in fact of finding the word
+                // as soon it stops, veryfy that indeed it stopped in fact of parser found text 
                     CheckStep( enumerator.Search.Found,
-                    $"enumerator found search text '{enumerator.Search.GetSearchedSequence()}'" );
+                    $"enumerator found search text '{enumerator.Search.GetSequence()}' in data" );
 
                  // veryfy that parser found correct byte index inside the buffer as expected
                     foundAtIndex[i] = enumerator.Search.FoundAt( enumerator.Position );
                     MatchStep( foundAtIndex[i], expectations[i], "start index of search text" );
                 }
                 if ( !enumerator.Search.Next() ) {
-                    // When the Search.Next() returns 'true' would mean before MoveNext() call
-                    // has returned 'false' for signaling an attached IParser found searchtext
-                    // in case Search.Next() returns 'false' would mean before MoveNext() call
-                    // has returned 'false' by some other reason then IParser found searchtext
+                    // - When the Search.Next() returns 'true' would mean before MoveNext() call
+                    //   has returned 'false' for signaling an attached IParser found searchtext
+                    // - In case Search.Next() returns 'false' would mean before MoveNext() call
+                    //   has returned 'false' by some other reason then IParser found searchtext
                     foundAtIndex[i] = -1;
                     // veryfy that parser doesn't signals search text found in case buffer end
                     CheckStep( i == 3, $"enumerator finds exactly {3} ocurrences of search text" );

@@ -29,7 +29,7 @@ namespace Yps
 	ref class Crypt;
 
 	public ref class CryptBuffer
-		: public IDisposable
+		: IDisposable
 	{
 	protected:
 
@@ -84,19 +84,20 @@ namespace Yps
 			}
 			property int Position {
 				int get(void) { return position; }
+				void set(int value) { position = value; }
 			}
 		};
 
 		generic<class T,class C>
 			where T : ValueType
 			where C : ValueType
-		ref class Cryptator abstract
+		ref class CrypticEnumerator abstract
 		: public Enumerator<C>
 		{
 
 		protected:
 			CryptKey^    key;
-			Cryptator( CryptBuffer^ instance, CryptKey^ useKey, int offset )
+			CrypticEnumerator( CryptBuffer^ instance, CryptKey^ useKey, int offset )
 				: Enumerator<C>(instance,offset) {
 				key = useKey;
 				start = offset;
@@ -105,7 +106,7 @@ namespace Yps
 			}
 
 		public:
-			virtual ~Cryptator() {
+			virtual ~CrypticEnumerator() {
 				if (current == IntPtr::Zero) return;
 				current = IntPtr::Zero;
 				position = -1;
@@ -117,7 +118,7 @@ namespace Yps
 				return key->currentHdr();
 			}
 		};
-
+		
 		ref class Bytes1Enumerator
 			: public CryptBuffer::Enumerator<Byte> {
 		public:
@@ -177,9 +178,9 @@ namespace Yps
 				}
 			}
 		};
-
+		
 		ref class InnerCrypticEnumerator
-			: public Cryptator<UInt24,UInt24> {
+			: public CrypticEnumerator<UInt24,UInt24> {
 		public:
 			InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
@@ -191,7 +192,7 @@ namespace Yps
 		};
 
 		ref class OuterCrypticEnumerator
-			: public CryptBuffer::Cryptator<UInt24,UInt24> {
+			: public CrypticEnumerator<UInt24,UInt24> {
 		public:
 			IParser<UInt24>^ Search;
 
@@ -204,15 +205,15 @@ namespace Yps
 
 			virtual bool MoveNext( void ) override {
 				if( Search != nullptr ) {
-					if ( Cryptator<UInt24,UInt24>::MoveNext() ) {
+					if ( CrypticEnumerator<UInt24,UInt24>::MoveNext() ) {
 						return !Search->Parse( Current );
 					} else return false;
-				} else return Cryptator<UInt24,UInt24>::MoveNext();
+				} else return CrypticEnumerator<UInt24,UInt24>::MoveNext();
 			}
 		};
 
 		ref class InnerCrypticStringEnumerator
-			: public Cryptator<UInt24,CryptFrame>
+			: public CrypticEnumerator<UInt24,CryptFrame>
 		{
 		private:
 			CryptFrame frame;
@@ -228,7 +229,7 @@ namespace Yps
 		};
 
 		ref class OuterCrypticStringEnumerator
-			: public Cryptator<UInt32,UInt24>
+			: public CrypticEnumerator<UInt32,UInt24>
 		{
 		public:
 			IParser<UInt24>^ Search;
@@ -242,10 +243,10 @@ namespace Yps
 
 			virtual bool MoveNext(void) override {
 				if( Search != nullptr ) {
-					if( Cryptator<UInt32,UInt24>::MoveNext() ) {
+					if( CrypticEnumerator<UInt32,UInt24>::MoveNext() ) {
 						return !Search->Parse( Current );
 					} else return false;
-				} else return Cryptator<UInt32,UInt24>::MoveNext();
+				} else return CrypticEnumerator<UInt32,UInt24>::MoveNext();
 			}
 		};
 
@@ -277,10 +278,10 @@ namespace Yps
 		virtual Enumerator<T>^ GetEnumerator( int offsetTs );
 
 		generic<class T,class C> where T : ValueType where C : ValueType
-		virtual Cryptator<T,C>^ GetCryptCallEnumerator( CryptKey^ use, CrypsFlags Mode );
+		virtual CrypticEnumerator<T,C>^ GetCrypticEnumerator( CryptKey^ use, CrypsFlags Mode );
 
 		generic<class T, class C> where T : ValueType where C : ValueType
-		virtual Cryptator<T, C>^ GetCryptCallEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs );
+		virtual CrypticEnumerator<T, C>^ GetCrypticEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs );
 
 		InnerCrypticEnumerator^ GetInnerCrypticEnumerator( CryptKey^ use, int offset );
 		OuterCrypticEnumerator^ GetOuterCrypticEnumerator( CryptKey^ use, int offset );
@@ -337,8 +338,8 @@ namespace Yps
 		int GetDataSize() { return count * size; }
 		int GetElements() { return count; }
 		int GetTypeSize() { return size; }
-		property int Length {
-			int get(void) { return GetElements(); }
+		property Int64 Length {
+			Int64 get(void) override { return GetElements(); }
 		}
 	};
 } //end of Yps
