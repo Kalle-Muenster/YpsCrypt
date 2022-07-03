@@ -215,11 +215,11 @@ Yps::Crypt::Init( bool init )
         crypt64_Initialize( true );
         if( wasError() ) {
             Crypt::error = Yps::Error( getErrorCode(), getError() );
-        } gcnew Cleansener();
+        } (gcnew Cleansener())->~Cleansener();
     } else if ( (!init) && runs ) {
         runs = init;
         Cleansener::Shuttown = true;
-        gcnew Cleansener();
+        (gcnew Cleansener())->~Cleansener();
     }
 }
 
@@ -601,7 +601,7 @@ Yps::Base64Api::Init( bool init )
         base64_Initialize();
     } else {
         DestructCommander();
-        gcnew Cleansener();
+        (gcnew Cleansener())->~Cleansener();
     }
 }
 

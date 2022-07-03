@@ -300,8 +300,9 @@ namespace Yps
         {
             // prepare a buffer containing cryptic data where the test will search
             // possitions of small portions of given cleartext data within it.
-            string cleartext = "- Chicken with Text: Banana is Info!\n- Banana with Data: Banana is Gelb!";
-            int[] expectations = new int[] { 21, 39, 57, -1 };
+            string cleartext = "Chicken with Text: Banana is Info! Banana with Data: Banana is Gelb!  ";
+            int[] expectations = new int[] { 8, 19, 29, 33, 35, 42, 47, 53, 67, -1 };
+            int expectedMatches = expectations.Length-1;
             byte[] cryptical = Encoding.Default.GetBytes( cleartext );
             CryptBuffer buffer = new CryptBuffer( cryptical );
             CryptBuffer header = Crypt.Encrypt24( keypassa, buffer, true );
@@ -312,38 +313,45 @@ namespace Yps
             else {
                 InfoStep("encrypted string:\n             {0}", cleartext );
             }
+            
 
             // test if the enumerator can find searched phrases of text within cryptic data
             CryptBuffer.OuterCrypticEnumerator enumerator = buffer.GetOuterCrypticEnumerator(keypassa, 0);
 
             // attach a parser which can find ocurrences of word: 'Banana' within parsed text content
-            enumerator.Search = new StringSearch24( "Banana" );
+            enumerator.Search = new StringSearch24( new string[]{ "Data", "~plup", "Info", "Banana", "!", "with" } );
 
             // verify that enumerator finds all three ocurences of search text 'Banana' and
-            // veryfy that each occurence it finds is located at the expected byte position
-            int[] foundAtIndex = new int[4];
-            for( int i = 0; i <= 3; ++i ) {
+            // both occurrences of search text 'with' AND veryfy that each occurence of these
+            // search verbs t finds, it indeed finds located at the expected byte positions
+            int[] foundAtIndex = new int[expectedMatches+1];
+            // try finding 7 expected occurencess of the search words  
+            for( int i = 0; i <= expectedMatches; ++i ) {
 
                 // start running a while loop until the enumerator stops moving
                 while ( enumerator.MoveNext() );
+                int foundcount = enumerator.Search.FoundCount;
+                if ( i < expectedMatches ) {
+                    while( foundcount > 0 ) {
+                        // as soon it stops, veryfy that indeed it stopped in fact of parser found text 
+                        CheckStep(enumerator.Search.Found,
+                        $"enumerator found search text '{enumerator.Search.GetSequence()}' in data");
 
-                if ( i < 3 ) {
-                // as soon it stops, veryfy that indeed it stopped in fact of parser found text 
-                    CheckStep( enumerator.Search.Found,
-                    $"enumerator found search text '{enumerator.Search.GetSequence()}' in data" );
-
-                 // veryfy that parser found correct byte index inside the buffer as expected
-                    foundAtIndex[i] = enumerator.Search.FoundAt( enumerator.Position );
-                    MatchStep( foundAtIndex[i], expectations[i], "start index of search text" );
-                }
-                if ( !enumerator.Search.Next() ) {
-                    // - When the Search.Next() returns 'true' would mean before MoveNext() call
-                    //   has returned 'false' for signaling an attached IParser found searchtext
-                    // - In case Search.Next() returns 'false' would mean before MoveNext() call
+                        // veryfy that parser found correct byte index inside the buffer as expected
+                        foundAtIndex[i] = enumerator.Search.FoundAt(enumerator.Position);
+                        MatchStep(foundAtIndex[i], expectations[i], "start index of found text");
+                        if( (foundcount = (enumerator.Search.Next()-1)) > 0 )
+                            ++i;
+                    }
+                } else
+                if ( foundcount == 0 ) {
+                    // - When the Search.Next() returns '>=1' would mean before MoveNext() call
+                    //   has returned 'false' for signaling an attached IParser found searchtext 
+                    // - In case Search.Next() returns '==0' would mean before MoveNext() call
                     //   has returned 'false' by some other reason then IParser found searchtext
                     foundAtIndex[i] = -1;
                     // veryfy that parser doesn't signals search text found in case buffer end
-                    CheckStep( i == 3, $"enumerator finds exactly {3} ocurrences of search text" );
+                    CheckStep( i == expectedMatches, $"enumerator finds exactly {i} ocurrences of search text" );
                 }
             }
         }
