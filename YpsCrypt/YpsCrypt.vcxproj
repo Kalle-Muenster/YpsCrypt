@@ -77,24 +77,27 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
+    <IncludePath>.\;..\etc;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <LinkKeyFile>$(ProjectDir)..\YpsCrypt.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>.\;c:\CMD\CCommands;$(IncludePath)</IncludePath>
+    <IncludePath>.\;..\etc;c:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
+    <IncludePath>.\;..\etc;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
     <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>.\;..\etc;c:\cmd\CCommands;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -171,9 +174,11 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\etc\enumoperators.h" />
     <ClInclude Include="CryptApi.hpp" />
     <ClInclude Include="CryptBuffer.hpp" />
     <ClInclude Include="CryptHelper.hpp" />
+    <ClInclude Include="CryptStream.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="settings.h" />
@@ -183,6 +188,7 @@
     <ClCompile Include="CryptApi.cpp" />
     <ClCompile Include="CryptBuffer.cpp" />
     <ClCompile Include="CryptHelper.cpp" />
+    <ClCompile Include="CryptStream.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

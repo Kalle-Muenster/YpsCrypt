@@ -1,6 +1,7 @@
 #ifndef YPSCRYPT_DLL_SETTINGS_H
 #define YPSCRYPT_DLL_SETTINGS_H
 
+
 #define _OnTheFly_ "YpsCrypt"
 #define YpsCryptVersionString L"0.0.0.1"
 #define YpsCryptVersionNumber 0x00000001

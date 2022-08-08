@@ -27,6 +27,10 @@
     <ClInclude Include="CryptApi.hpp" />
     <ClInclude Include="CryptBuffer.hpp" />
     <ClInclude Include="CryptHelper.hpp" />
+    <ClInclude Include="CryptStream.hpp" />
+    <ClInclude Include="..\etc\enumoperators.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -38,6 +42,7 @@
     <ClCompile Include="CryptApi.cpp" />
     <ClCompile Include="CryptBuffer.cpp" />
     <ClCompile Include="CryptHelper.cpp" />
+    <ClCompile Include="CryptStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc">

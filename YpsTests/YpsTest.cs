@@ -38,20 +38,76 @@ namespace Yps
 
         public CrypsTests( bool verbose, bool xml ) : base( verbose, xml )
         {
-            AddTestCase( "CryptBuffer", cryptingBuffer );
-            AddTestCase( "Base64Encoding", base64encoding, true );
-            AddTestCase( "Base64Decoding", base64decoding, false );
-            AddTestCase( "CreatingKeys", creatingKey );
-            AddTestCase( "Encrypting", encryptingStrings, true );
-            AddTestCase( "Decrypting", decryptingStrings, false );
-            AddTestCase( "CryptingErrors", cryptingErrors );
-            AddTestCase( "BinaryEncrypting", encryptingBinar, true );
-            AddTestCase( "BinaryDecrypting", decryptingBinar, false );
-            AddTestCase( "OuterCrypticEnumerator", outerCryptics );
-            AddTestCase( "Encrypt24", encryptingDirectly, true );
-            AddTestCase( "Decrypt24", decryptingDirectly, false );
-            AddTestCase( "CryptBufferDisposal", disposingBuffes  );
-            AddTestCase( "De-Initialization", deInitialization );
+            AddTestCase("CryptBuffer", cryptingBuffer);
+            AddTestCase("Base64Encoding", base64encoding, true);
+            AddTestCase("Base64Decoding", base64decoding, false);
+            AddTestCase("CreatingKeys", creatingKey);
+
+            AddTestCase("Encrypting", encryptingStrings, true);
+            AddTestCase("Decrypting", decryptingStrings, false);
+
+            AddTestCase("BinaryEncrypting", encryptingBinar, true);
+            AddTestCase("BinaryDecrypting", decryptingBinar, false);
+
+            AddTestCase("Encrypt24", encryptingDirectly, true);
+            AddTestCase("Decrypt24", decryptingDirectly, false);
+
+            AddTestCase("EncryptionStream", encryptStreams, true);
+            AddTestCase("DecryptionStream", decryptStreams, false);
+
+            AddTestCase("EncryptingFiles", encryptingFiles, true);
+            AddTestCase("DecryptingFiles", decryptingFiles, false);
+
+            AddTestCase("CryptingErrors", cryptingErrors);
+
+            AddTestCase("OuterCrypticEnumerator", outerCryptics);
+
+            AddTestCase("CryptBufferDisposal", disposingBuffes);
+            AddTestCase("De-Initialization", deInitialization);
+        }
+
+        private void encryptStreams()
+        {
+            
+            CryptStream stream = new CryptStream( keypassa, "TestFile.yps", CryptStream.Flags.OpenWrite );
+            stream.Write( Encoding.Default.GetBytes(testdata) );
+            stream.Flush();
+            stream.Close();
+
+            System.IO.FileInfo file = new System.IO.FileInfo( "TestFile.yps" );
+            CheckStep( file.Exists, "Writing into encryption stream works" );
+        }
+
+        private void decryptStreams()
+        {
+            CryptStream stream = new CryptStream( keypassa, "TestFile.yps", CryptStream.Flags.OpenRead );
+            int length = stream.Read( bytesbin, 0, (int)stream.Length );
+            stream.Flush();
+            stream.Close();
+            String result = Encoding.Default.GetString( bytesbin, 0, length );
+            MatchStep( result, testdata, "decrypted string from stream" );
+        }
+
+        private void encryptingFiles()
+        {
+            System.IO.FileInfo file = new System.IO.FileInfo("YpsTests.deps.json");
+            int filesize = (int)file.Length;
+            int ypsfilesize = Crypt.EncryptFile( keypassa, file );
+            System.IO.FileInfo ypsfile = new System.IO.FileInfo("YpsTests.deps.json.yps");
+            CheckStep(file.Exists,"encrypted file '{0}' to '{1}'",file.Name,ypsfile.Name);
+            CheckStep(filesize == (ypsfilesize-12),"encrypted file has expected size");
+            file.Delete();
+        }
+
+        private void decryptingFiles()
+        {
+            System.IO.FileInfo ypsfile = new System.IO.FileInfo("YpsTests.deps.json.yps");
+            int ypssize = (int)ypsfile.Length;
+            int size = Crypt.DecryptFile( keypassa, ypsfile );
+            System.IO.FileInfo txtfile = new System.IO.FileInfo("YpsTests.deps.json");
+            CheckStep(txtfile.Exists,"decrypted file '{0}' to '{1}'",ypsfile.Name,txtfile.Name);
+            CheckStep(size == (ypssize-12), "decrypted file has expected size");
+            ypsfile.Delete();
         }
 
         private void printVersionNumber()
@@ -83,7 +139,6 @@ namespace Yps
                 PassStep(string.Format("calling Yps.Base.Encode<byte>() returned {0} charracters", b64data.Length));
             else
                 FailStep(string.Format("calling Yps.Base.Encode<byte>() returned {0}", Base64Api.Error));
-            SkipOnFails = true;
         }
 
         private void base64decoding()
@@ -100,8 +155,6 @@ namespace Yps
                 } result = bldr.ToString();
             }
             MatchStep( result.Substring(0,90), testdata.Substring(0,90), "strings" );
-
-            SkipOnFails = false;
         }
 
         protected void creatingKey()
@@ -123,8 +176,6 @@ namespace Yps
             passdata = data;
             passhash = hash;
             keypassa = key2;
-
-            SkipOnFails = true;
         }
 
         protected void failingKeys()
@@ -175,7 +226,6 @@ namespace Yps
 
             // compare encrypted data against the expected result from testdata set
             MatchStep( b64crypt, expected, "strings" );
-            SkipOnFails = true;
         }
 
         protected void decryptingStrings()
@@ -185,10 +235,8 @@ namespace Yps
             string result = "";
             if ( binbacks == null )
                 FailStep( "calling Yps.Crypt.Decrypt() returned " + Crypt.Error.ToString() );
-            else unsafe { 
-                fixed ( byte* p = &binbacks[0] ) {
-                    result = new string((sbyte*)p, 0, bytesize, Encoding.ASCII );
-                } result = result.Trim();
+            else unsafe {
+                result = Encoding.ASCII.GetString(binbacks, 0, 90);
                 PassStep( "calling Yps.Crypt.Decrypt() returned " + result.Length.ToString()+ " byte" );
             } MatchStep( result, testdata, "strings" );
         }
@@ -209,20 +257,19 @@ namespace Yps
         private void decryptingBinar()
         {
             // try binary decrypting a string that previously had been encrypted binary
-            binbacks = Crypt.BinaryDecrypt<byte>( keypassa, bincrypt );
+            binbacks = Crypt.BinaryDecrypt( keypassa, bincrypt );
             string result = "";
 
             // ensure operation was successive and no errors are caused
-            if (binbacks == null )
+            if( binbacks == null ) {
                 FailStep( "calling Yps.Crypt.BinaryDecrypt() " + Crypt.Error.ToString() );
-            else unsafe { fixed (byte* p = &binbacks[0]) {
-                    result = new string((sbyte*)p, 0, bytesize, Encoding.ASCII);
-                } result = result.Trim();
-
+            } else {
+                PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", binbacks.Length );
+                result = Encoding.Default.GetString( binbacks );
+                result = result.Trim();
+            } 
             // ensure resulting output returned is data of expected length
-            PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", binbacks.Length ); }
             MatchStep( result, testdata, "decrypted data" );
-            CloseCase( CurrentCase );
         }
 
         private void encryptingDirectly()
@@ -230,26 +277,38 @@ namespace Yps
             // try directly encrypting a passed data buffer (means not returning a cryptic copy
             // but encrypting the passed data buffer itself )
             UInt24 before = dat[3];
-            hdr = Crypt.Encrypt24( keypassa, dat );
-            if ( hdr == null ) { FailStep( "Yps.Crypt.Encrypt24() returned: {0}", Crypt.Error ); }
-            else MatchStep( hdr.GetDataSize(), 12, "returned header of length" );
+
+            hdr = Crypt.Encrypt24( keypassa, dat, false );
+            Crypt.StoptEn24( keypassa );
+
+            if ( hdr == null ) {
+                FailStep( "Yps.Crypt.Encrypt24() returned: {0}", Crypt.Error ); }
+            else 
+                MatchStep( hdr.GetDataSize(), 12, "returned header of length" );
+            
             UInt24 after = dat[3];
             CheckStep( before != after, "data MUST change during encryption" );
         }
 
         private void decryptingDirectly()
         {
+            InfoStep("For testing directly decrypting a buffer, the encrypted\n             testdata output from testcase Encrypt24 is reused");
+            
             // try directly decrypting cryptic data (means not returning a plaintext copy
             // but instead decrypting that cryptic data within the containing buffer it self)
             UInt24 differentVor = dat[3], differentNach;
 
             // typecast the bufer to be reinterpreted as bytes
-            dat.SetDataType( typeof(byte) );
+         //   dat.SetDataType( typeof(byte) );
 
             int size = Crypt.Decrypt24( keypassa, hdr, dat );
             Crypt.StoptEn24( keypassa );
             differentNach = dat[3];
-            CheckStep( differentVor != differentNach, "data MUST change during decryption");
+            
+            if( differentVor != differentNach )
+                PassStep("data MUST change during decryption");
+            else
+                FailStep("data has NOT change during decryption");
 
             if ( size <= 0 ) {
                 FailStep( "calling Yps.Crypt.Decrypt24() returned: {0}", Crypt.Error );
@@ -370,8 +429,74 @@ namespace Yps
             printVersionNumber();
             setTestData(
                 "YpsCryptTest", 8374368578003016900u, "This is test data which consists from a System.String which contains 90 characters of text",
-                "WiKQAJuqApQEeb64wztdjLidjLirbsArczItRzMaRPtd2Paa2PlZjPe1R5Bab4OyGCitcmATjpIeGCT+R5OdGvjaRPtd2Paa2PlZRzmdG4Ba/+Ea2Pttjvm7RzwLjLiyb3irbstr===="
+                "WiKQAJuqApQEeb64wztdjLidjLirbsArczItRzMaRPtd2Paa2PlZjPe1R5Bab4OyGCitcmATjpIeGCT+R5OdGvjaRPtd2Paa2PlZRzmdG4Ba/+Ea2Pttjvm7RzwLjLiyb3irbstr"
             );
+
+            /*
+            NextCase("CryptBuffers");
+            cryptingBuffer();
+            CloseCase(CurrentCase);
+
+            NextCase("Base64Encoding");
+            base64encoding();
+            CloseCase(CurrentCase);
+
+            NextCase("Base64Decoding");
+            base64decoding();
+            CloseCase(CurrentCase);
+
+            NextCase("CreatingKeys");
+            creatingKey();
+            CloseCase(CurrentCase);
+
+            NextCase("Encrypting");
+            encryptingStrings();
+            CloseCase(CurrentCase);
+
+            NextCase("Decrypting");
+            decryptingStrings();
+            CloseCase(CurrentCase);
+
+            NextCase("CryptingErrors");
+            cryptingErrors();
+            CloseCase(CurrentCase);
+
+            NextCase("Encrypt24");
+            encryptingDirectly();
+            CloseCase(CurrentCase);
+
+            NextCase("Decrypt24");
+            decryptingDirectly();
+            CloseCase(CurrentCase);
+
+            NextCase("BinaryEncrypting");
+            encryptingBinar();
+            CloseCase(CurrentCase);
+
+            NextCase("BinaryDecrypting");
+            decryptingBinar();
+            CloseCase(CurrentCase);
+
+            NextCase("EncryptionStream");
+            encryptStreams();
+            CloseCase(CurrentCase);
+
+            NextCase("DecryptionStream");
+            decryptStreams();
+            CloseCase(CurrentCase);
+
+            NextCase("OuterCrypticEnumerator");
+            outerCryptics();
+            CloseCase(CurrentCase);
+
+            NextCase("CryptBufferDisposal");
+            disposingBuffes();
+            CloseCase(CurrentCase);
+
+            NextCase("De-Initialization");
+            deInitialization();
+            CloseCase(CurrentCase);
+            */
         }
     }
 }

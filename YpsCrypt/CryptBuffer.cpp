@@ -6,7 +6,7 @@
 ||                                                           ||
 \*\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
-
+#include <eszentielle/.CommandlinerTypes.h>
 #include "CryptBuffer.hpp"
 
 
@@ -57,6 +57,7 @@ Yps::CryptBuffer::AsFrames(void)
 
 Yps::CryptBuffer::CryptBuffer( Array^ from )
 {
+	orig = from;
 	type = from->GetValue(0)->GetType();
 	data = Marshal::UnsafeAddrOfPinnedArrayElement( from, 0 );
 	size = Marshal::SizeOf( type );
@@ -71,6 +72,7 @@ Yps::CryptBuffer::CryptBuffer( void )
 	free = false;
 	count = 0;
 	size = 1;
+	orig = nullptr;
 }
 
 Yps::CryptBuffer::CryptBuffer( int data_size )
@@ -80,6 +82,7 @@ Yps::CryptBuffer::CryptBuffer( int data_size )
 	free = true;
 	count = data_size;
 	size = 1;
+	orig = nullptr;
 }
 
 Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size )
@@ -89,12 +92,13 @@ Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size )
 	data = buffer;
 	count = data_size;
 	free = false;
-	
+	orig = nullptr;
 }
 
 Yps::CryptBuffer::CryptBuffer( Type^ data_type, int array_size )
 {
-	size = Marshal::SizeOf(data_type);
+	orig = nullptr;
+	size = Marshal::SizeOf( data_type );
 	count = array_size;
 	array_size *= size;
 	if (array_size % 3 > 0)
@@ -106,8 +110,10 @@ Yps::CryptBuffer::CryptBuffer( Type^ data_type, int array_size )
 
 Yps::CryptBuffer::~CryptBuffer( void )
 {
-	if( free && data != IntPtr::Zero ) Marshal::FreeCoTaskMem( data );
+	if( free && data != IntPtr::Zero )
+		Marshal::FreeCoTaskMem( data );
 	data = IntPtr::Zero;
+	orig = nullptr;
 	free = false;
 }
 
@@ -117,6 +123,82 @@ Yps::CryptBuffer::SetDataType( Type^ set_type )
 	int data_size = GetDataSize();
 	size = Marshal::SizeOf( set_type );
 	count = data_size / size;
+}
+
+generic<class T> where T: ValueType void
+Yps::CryptBuffer::SetData( array<T>^ newBuffer )
+{
+	if (this->free) {
+		if (this->data != IntPtr::Zero) {
+			Marshal::FreeCoTaskMem(data);
+		} this->free = false;
+	} this->data = Marshal::UnsafeAddrOfPinnedArrayElement(newBuffer, 0);
+	this->size = Marshal::SizeOf(type = T::typeid);
+	this->count = newBuffer->Length;
+	this->orig = newBuffer;
+}
+
+void
+Yps::CryptBuffer::SetData( IntPtr ptData, int cbData )
+{
+	if( this->free ) {
+		if (this->data != IntPtr::Zero) {
+			Marshal::FreeCoTaskMem( data );
+		} this->free = false;
+	} this->data = ptData;
+	this->count = cbData;
+	this->orig = nullptr;
+	this->size = 1;
+	this->type = System::Byte::typeid;
+}
+
+Object^
+Yps::CryptBuffer::GetData( void )
+{
+	return this->orig == nullptr
+         ? this->data : this->orig;
+}
+
+generic<class T> where T : ValueType
+array<T>^ Yps::CryptBuffer::GetCopy( void )
+{
+	int bytesize = GetDataSize();
+	int typesize = sizeof(T);
+	int loopsize = bytesize / typesize;
+	loopsize = loopsize + (bytesize % typesize > 0 ? 1 : 0);
+	void* d = data.ToPointer();
+	switch (sizeof(T)) {
+	case 1: { array<byte>^ copy = gcnew array<byte>(loopsize);
+		byte* src = (byte*)d;
+		for (int i = 0; i < loopsize; ++i)
+			copy[i] = src[i];
+		return reinterpret_cast<array<T>^>(copy);
+	}
+	case 2: { array<word>^ copy = gcnew array<word>(loopsize);
+		word* src = (word*)d;
+		for (int i = 0; i < loopsize; ++i)
+			copy[i] = src[i];
+		return reinterpret_cast<array<T>^>(copy);
+	}
+	case 3: { array<Stepflow::UInt24>^ copy = gcnew array<Stepflow::UInt24>(loopsize);
+		Stepflow::UInt24* src = (Stepflow::UInt24*)d;
+		for (int i = 0; i < loopsize; ++i)
+			copy[i] = src[i];
+		return reinterpret_cast<array<T>^>(copy);
+	}
+	case 4: { array<uint>^ copy = gcnew array<uint>(loopsize);
+		uint* src = (uint*)d;
+		for (int i = 0; i < loopsize; ++i)
+			copy[i] = src[i];
+		return reinterpret_cast<array<T>^>(copy);
+	}
+	case 8: { array<ulong>^ copy = gcnew array<ulong>(loopsize);
+		ulong* src = (ulong*)d;
+		for (int i = 0; i < loopsize; ++i)
+			copy[i] = src[i];
+		return reinterpret_cast<array<T>^>(copy);
+	}
+	} return nullptr;
 }
 
 generic<class T> where T : ValueType
@@ -134,4 +216,17 @@ Yps::CryptBuffer::Enumerator<T>^ Yps::CryptBuffer::GetEnumerator( int offsetTs )
 	case 4: return (Enumerator<T>^)gcnew Base64Enumerator(this,offsetTs);
 	default: throw gcnew Exception("Byte, UInt24, UInt32 and CryptFrame are supported types");
 	}
+}
+
+System::String^ 
+Yps::CryptBuffer::ToString( void )
+{
+	int len = GetDataSize();
+	System::Text::StringBuilder^ builder = gcnew System::Text::StringBuilder(len,len);
+	interior_ptr<Byte> ptb = AsBytes();
+	while(ptb[--len] == 0 && len > 0);
+	++len;
+	for(int i = 0; i < len; ++i, ++ptb)
+		builder->Append( (wchar_t)*ptb );
+	return builder->ToString();
 }

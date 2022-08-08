@@ -33,12 +33,13 @@ namespace Yps
 	{
 	protected:
 
-		IntPtr   data;
+		bool     free;
 		unsigned size;
 		unsigned count;
 		Type^    type;
-		bool     free;
-
+		Object^  orig;
+		IntPtr   data;
+		
 	internal:
 
 		interior_ptr<Byte>       AsBytes( void );
@@ -50,13 +51,13 @@ namespace Yps
 		generic<class T> where T : ValueType
 		ref class Enumerator abstract
 		{
-
 		protected:
+
 			int          start;
 			int          stopt;
-			IntPtr       current;
 			int          position;
-
+			IntPtr       current;
+			
 			Enumerator( CryptBuffer^ instance, int offset ) {
 				start = offset;
 				stopt = instance->GetElements() - start;
@@ -65,6 +66,7 @@ namespace Yps
 			}
 
 		public:
+
 			virtual bool MoveNext(void) {
 				return ++position < stopt;
 			}
@@ -258,16 +260,10 @@ namespace Yps
 		~CryptBuffer();
 
 		generic<class T> where T: ValueType
-			void SetData( array<T>^ newBuffer ) {
-			if (this->free) {
-				if (this->data != IntPtr::Zero) {
-					Marshal::FreeCoTaskMem( data );
-				} this->free = false;
-			} this->data = Marshal::UnsafeAddrOfPinnedArrayElement( newBuffer, 0 );
-			this->size = Marshal::SizeOf( type = T::typeid );
-			this->count = newBuffer->Length;
-		}
+		void SetData( array<T>^ newBuffer );
+		void SetData( IntPtr ptData, int cbData );
 
+		Object^   GetData(void);
 		generic<class T> where T : ValueType
         array<T>^ GetCopy(void);
 
@@ -292,22 +288,11 @@ namespace Yps
 			return data;
 		}
 
-		virtual String^ ToString() override {
-			System::Text::StringBuilder^ builder = gcnew System::Text::StringBuilder();
-			int len = GetDataSize();
-			interior_ptr<Byte> ptb = AsBytes() + len;
-			while (*ptb-- == 0) len--;
-			ptb = AsBytes();
-			for (int i = 0; i < len; ++i, ++ptb) builder->Append((wchar_t)*ptb);
-			return builder->ToString();
-		}
+		virtual String^ ToString() override;
 
 		void SetDataType( Type^ set_type );
 
-		long long ByteIndex;
-		int       DataIndex;
-		short     BaseIndex;
-
+		Int64    ByteIndex;
 		property Byte default[ Int64 ] {
 			Byte get(Int64 idx) {
 				return *(AsBytes() + idx);
@@ -317,6 +302,7 @@ namespace Yps
 			}
 		}
 
+		Int32    DataIndex;
 		property UInt24 default[ Int32 ] {
 			UInt24 get(Int32 idx) {
 				return *(AsBinary() + idx);
@@ -326,6 +312,7 @@ namespace Yps
 			}
 		}
 
+		Int16    FrameIndex;
 		property CryptFrame default[ Int16 ] {
 			CryptFrame get(Int16 idx) {
 				return *(AsFrames() + idx);

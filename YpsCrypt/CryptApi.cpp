@@ -283,7 +283,7 @@ Yps::Crypt::Encrypt( CryptKey^ key, array<T>^ Src )
     ] = 0;
     if( check( size_out ) ) {
         return nullptr;
-    } String^ enc = gcnew String( dst, 0, size_out );
+    } String^ enc = gcnew String(dst, 0, size_out);
     return enc;
 }
 
@@ -291,25 +291,32 @@ generic<class T> array<T>^
 Yps::Crypt::Decrypt( CryptKey^ key, String^ cryptisch )
 {
     if ( fail() ) return nullptr;
+    const int size_elm = sizeof(T);
     const int size_enc = cryptisch->Length;
-    if (size_enc < 16) {
+    //cryptisch += " ";
+
+    if( size_enc < 16 ) {
         setError( "header", FourCC("hdr") );
         check(0);
         return nullptr;
     }
-    uint size_dec = CRYPT64_DECRYPTED_SIZE(size_enc);
-    int prox_dec = (size_dec + ( sizeof(T) - (size_dec % sizeof(T)) ) );
-    array<byte>^ Src = Encoding::ASCII->GetBytes(cryptisch);
-    array<T>^ Dst = gcnew array<T>( prox_dec / sizeof(T) );
-    pin_ptr<byte> src( &Src[0] );
-    pin_ptr<T> dstT( &Dst[0] );
-    byte* dst = (byte*)dstT;
-    size_dec = crypt64_decrypt(
-        static_cast<K64*>( key->ToPointer() ),
-        reinterpret_cast<const char*>(src), dst );
-    if ( check( size_dec ) ) {
+
+    uint size_dec = CRYPT64_DECRYPTED_SIZE( size_enc );
+    const int prox_dec = (size_dec + ( size_elm - (size_dec % size_elm) ) );
+    array<T>^ Dst = gcnew array<T>( prox_dec / size_elm );
+    array<byte>^ Src = Encoding::Default->GetBytes( cryptisch );
+    //Src[size_enc] = 0;
+
+    pin_ptr<byte> ptrSrc( &Src[0] );
+    pin_ptr<T> ptrDst( &Dst[0] );
+    byte* dst = (byte*)ptrDst;
+    char* src = (char*)ptrSrc;
+
+    size_dec = crypt64_decrypt( (K64*)key->ToPointer(), src, Src->Length, dst );
+    if( check( size_dec ) ) {
         return nullptr;
-    } while ( size_dec < prox_dec ) * (dst + size_dec++) = 0;
+    } while ( size_dec < prox_dec )
+        dst[size_dec++] = 0;
     return Dst;
 }
 
@@ -391,13 +398,23 @@ Yps::Crypt::EncryptString( CryptKey^ key, String^ plain_string )
 UInt24
 Yps::Crypt::EncryptFrame24( CryptKey^ key, UInt24 frame )
 {
-    return UInt24( crypt64_binary_encryptFrame( static_cast<K64*>(key->ToPointer()), reinterpret_cast<k64Chunk&>(frame) ).u32 );
+    return UInt24(
+        crypt64_binary_encryptFrame(
+            static_cast<K64*>(key->ToPointer()),
+            reinterpret_cast<k64Chunk&>(frame)
+        ).u32
+    );
 }
 
 UInt24
 Yps::Crypt::DecryptFrame24( CryptKey^ key, UInt24 frame )
 {
-    return UInt24( crypt64_binary_decryptFrame( static_cast<K64*>(key->ToPointer()), reinterpret_cast<k64Chunk&>(frame) ).u32 );
+    return UInt24( 
+        crypt64_binary_decryptFrame(
+            static_cast<K64*>(key->ToPointer()),
+            reinterpret_cast<k64Chunk&>(frame)
+        ).u32
+    );
 }
 
 Yps::CryptBuffer^
@@ -411,20 +428,20 @@ Yps::Crypt::CreateHeader( CryptKey^ key, CrypsFlags mod )
                 CryptBuffer^ hdr = gcnew CryptBuffer( UInt24::typeid,4 );
                 CodeTable = base64_b64Table();
                 pin_ptr<byte> Hdr( hdr->AsBytes() );
-                base64_decodeData( Hdr, validator );
+                base64_decodeData( Hdr, validator, 16 );
                 key->currentHdr( hdr );
             } else {
                 CryptFrame* validator = (CryptFrame*)crypt64_createValidator(k);
                 CryptBuffer^ hdr = gcnew CryptBuffer( UInt32::typeid, 4 );
-                hdr->BaseIndex = -1;
-                hdr[++hdr->BaseIndex] = *validator++;
-                hdr[++hdr->BaseIndex] = *validator++;
-                hdr[++hdr->BaseIndex] = *validator++;
-                hdr[++hdr->BaseIndex] = *validator;
+                hdr->FrameIndex = -1;
+                hdr[++hdr->FrameIndex] = *validator++;
+                hdr[++hdr->FrameIndex] = *validator++;
+                hdr[++hdr->FrameIndex] = *validator++;
+                hdr[++hdr->FrameIndex] = *validator;
                 key->currentHdr( hdr );
             } return key->currentHdr();
 	    } 
-    } else setError("context", FourCC("ctx") );
+    } else setError( "context", CRYPS64::CONTXT_ERROR );
     return (CryptBuffer^)nullptr;
 }
 
@@ -434,19 +451,19 @@ Yps::Crypt::Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete )
     const int len = data->GetDataSize() / 3;
     K64* k = (K64*)key->ToPointer();
     if( CurrentContext != k->pass.value ) {
-        if( crypt64_prepareContext( k, Byte( CrypsFlags::Binary ) ) ) {
+        if( crypt64_prepareContext( k, CRYPS64::BINARY ) ) {
             const char* verf = crypt64_createValidator( k );
             array<UInt24>^ Hdr = gcnew array<UInt24>( 4 );
             pin_ptr<UInt24> hdr( &Hdr[0] );
             if( verf ) {
                 CodeTable = base64_b64Table();
-                base64_decodeData( reinterpret_cast<byte*>(hdr), verf );
+                base64_decodeData( reinterpret_cast<byte*>(hdr), verf, 16 );
                 key->currentHdr( Hdr ); }
         } else {
-            setError( "context", FourCC("ctx") );
+            setError( "context", CRYPS64::CONTXT_ERROR );
             return nullptr; }
-    } else if( !crypt64_setContext( k, Byte( CrypsFlags::Binary ) ) ) {
-        setError( "context", FourCC("ctx") );
+    } else if( !crypt64_setContext( k, CRYPS64::BINARY ) ) {
+        setError( "context", CRYPS64::CONTXT_ERROR );
         return nullptr;
     }
     interior_ptr<UInt24> ptr = data->AsBinary();
@@ -461,7 +478,7 @@ bool
 Yps::Crypt::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
 {
     if ( encryptedData == nullptr ) {
-        setError( "header", FourCC("hdr") );
+        setError( "buffer", CRYPS64::INPUTS_ERROR );
         return false;
     } else if ( encryptedData->GetDataSize() < 12 ) {
         setError( "header", FourCC("hdr") );
@@ -469,26 +486,30 @@ Yps::Crypt::BeginDe24( Yps::CryptKey^ key, CryptBuffer^ encryptedData )
     }
 	K64* k = static_cast<K64*>( key->ToPointer() );
     if ( CurrentContext != k->pass.value ) {
-        if ( crypt64_prepareContext( k, Byte( CrypsFlags::Binary ) ) ) {
+        if ( crypt64_prepareContext( k, CRYPS64::BINARY ) ) {
             char buffer[24];
             CodeTable = base64_b64Table();
-            array<UInt24>^ hdr = gcnew array<UInt24>(4);
+            bool newheader = false;
+            CryptBuffer^ hdr = key->currentHdr();
+            if( hdr == nullptr ) {
+                hdr = gcnew CryptBuffer(gcnew array<UInt24>(4));
+                newheader = true;
+            } 
             pin_ptr<UInt24> Src = encryptedData->AsBinary();
             UInt24* src = Src;
             hdr[0] = *src;
             hdr[1] = *(src+1);
             hdr[2] = *(src+2);
             hdr[3] = *(src+3);
-            pin_ptr<UInt24> pt( &hdr[0] );
-            base64_encodeData( &buffer[0], reinterpret_cast<const byte*>(pt), 12 );
+            base64_encodeData( &buffer[0], reinterpret_cast<const byte*>(hdr->GetPointer().ToPointer()), 12 );
             CodeTable = k->table;
             if( crypt64_verifyValidator( k, reinterpret_cast<const byte*>(&buffer[0]) ) ) {
-                key->currentHdr( hdr );
+                if ( newheader ) key->currentHdr( hdr );
                 return true;
             } else
                 return false;
         }
-    } else setError( "context", FourCC("ctx") );
+    } else setError( "context", CRYPS64::CONTXT_ERROR );
     return false;
 }
 
@@ -496,7 +517,7 @@ bool
 Yps::Crypt::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
 {
     if (encryptedData == nullptr) {
-        setError( "header", FourCC("hdr"));
+        setError( "buffer", CRYPS64::INPUTS_ERROR );
         return false;
     }
     else if (encryptedData->GetDataSize() < 16) {
@@ -508,19 +529,22 @@ Yps::Crypt::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
         if( crypt64_prepareContext( k, Byte(CrypsFlags::Base64) ) ) {
             pin_ptr<const byte> Hdr( encryptedData->AsBytes() );
             if ( crypt64_verifyValidator( k, Hdr ) ) {
-                CryptBuffer^ hdr = gcnew CryptBuffer( UInt32::typeid, 4 );
+                CryptBuffer^ hdr = key->currentHdr();
+                bool newhdr = false;
+                if(!(newhdr = (hdr != nullptr)))
+                    hdr = gcnew CryptBuffer( UInt32::typeid, 4 );
                 interior_ptr<CryptFrame> src = encryptedData->AsFrames();
-                hdr->BaseIndex = -1;
-                hdr[++hdr->BaseIndex] = *src;
-                hdr[++hdr->BaseIndex] = *(src + 1);
-                hdr[++hdr->BaseIndex] = *(src + 2);
-                hdr[++hdr->BaseIndex] = *(src + 3);
-                key->currentHdr( hdr );
+                hdr->FrameIndex = -1;
+                hdr[++hdr->FrameIndex] = *src;
+                hdr[++hdr->FrameIndex] = *(src + 1);
+                hdr[++hdr->FrameIndex] = *(src + 2);
+                hdr[++hdr->FrameIndex] = *(src + 3);
+                if ( newhdr ) key->currentHdr( hdr );
                 return true;
             } else
                 return false;
         }
-    } else setError("context", FourCC("ctx"));
+    } else setError( "context", CRYPS64::CONTXT_ERROR );
     return false;
 }
 
@@ -534,7 +558,7 @@ int
 Yps::Crypt::Decrypt24( CryptKey^ key, CryptBuffer^ cryptPlusHdr )
 {
     interior_ptr<UInt24> dst = cryptPlusHdr->AsBinary();
-    int len = cryptPlusHdr->GetElements() - 4;
+    int len = (cryptPlusHdr->GetDataSize() / 3) - 4;
     if ( BeginDe24( key, cryptPlusHdr ) ) {
         interior_ptr<UInt24> src = dst + 4;
         for (int i = 0; i < len; ++i ) {
@@ -546,22 +570,76 @@ Yps::Crypt::Decrypt24( CryptKey^ key, CryptBuffer^ cryptPlusHdr )
     } return len; //return length of array
 }
 
+/// <summary>
+/// Int32 Decrypt24(CryptKey key, CryptBuffer header, CryptBuffer buffer)
+/// decrypt (headerless encrypted) data contained in the passed 'buffer'
+/// by using a separately passed piece of 'header' data for verifying 'key'
+/// correctnes before using the key for decrypting the headerless buffer
+/// </summary>
+/// <param name="key">CryptKey</param>
+/// <param name="header">CryptBuffer containing metadata regarding the cryptic data 'buffer'</param>
+/// <param name="buffer">CryptBuffer containing raw, headerless encrypted data to be decrypted</param>
+/// <returns></returns>
 int
 Yps::Crypt::Decrypt24( CryptKey^ key, CryptBuffer^ hdr, CryptBuffer^ dat )
 {
-    int len = dat == nullptr ? -1 : dat->GetElements() > 0 ? dat->GetElements() : -1;
-    if (BeginDe24(key, hdr)) {
+    if( dat->GetTypeSize() != 1 )
+        dat->SetDataType( byte::typeid );
+
+    int len = dat == nullptr 
+       ? -1 : dat->GetElements() > 0 
+            ? dat->GetElements()
+            : -1;
+
+    if( BeginDe24( key, hdr ) ) {
         if (len == -1) len = 0;
         else { interior_ptr<UInt24> data = dat->AsBinary();
-			for ( int i = 0; i < len; ++i, ++data )
-				*data = DecryptFrame24(key, *data);
+			for ( int i = 0; i < len; i += 3, ++data )
+				*data = DecryptFrame24( key, *data );
         } return len;
     } else {
         error = Yps::Error( getErrorCode(), getError() );
         return -1;
-    } //return length of array
+    }
 }
 
+int
+Yps::Crypt::EncryptFile(CryptKey^ key, System::IO::FileInfo^ file)
+{
+    if (file->Exists) {
+        uint l = file->FullName->Length;
+        array<byte>^ srcname = Encoding::Default->GetBytes(file->FullName + " ");
+        srcname[l] = '\0';
+        array<byte>^ dstname = Encoding::Default->GetBytes(file->FullName + ".yps ");
+        dstname[l + 4] = '\0';
+        pin_ptr<byte> Src(&srcname[0]);
+        pin_ptr<byte> Dst(&dstname[0]);
+        char* src = (char*)Src;
+        char* dst = (char*)Dst;
+        return crypt64_binary_encryptFile( (K64*)key->ToPointer(), src, dst );
+    }
+    else throw gcnew System::IO::FileNotFoundException( file->Name );
+}
+int
+Yps::Crypt::DecryptFile( CryptKey^ key, System::IO::FileInfo^ file )
+{
+    if (file->Extension != ".yps")
+        throw gcnew System::IO::FileNotFoundException( "extension should be '.yps'" );
+
+    if (file->Exists) {
+        uint l = file->FullName->Length;
+        array<byte>^ srcname = Encoding::Default->GetBytes( file->FullName + " " );
+        srcname[l] = '\0';
+        array<byte>^ dstname = Encoding::Default->GetBytes( file->FullName->Substring(0,l-4) + " " );
+        dstname[l - 4] = '\0';
+        pin_ptr<byte> Src(&srcname[0]);
+        pin_ptr<byte> Dst(&dstname[0]);
+        char* src = (char*)Src;
+        char* dst = (char*)Dst;
+        return crypt64_binary_decryptFile( (K64*)key->ToPointer(), src, dst );
+    }
+    else throw gcnew System::IO::FileNotFoundException( file->Name );
+}
 
  /////////////////////////////////////////
 /// Base64Api
@@ -613,8 +691,8 @@ Yps::Base64Api::Encode( array<T>^ data )
     pin_ptr<T> dat( &data[0] );
     const byte* src = (const byte*)dat;
     array<char>^ Dst = gcnew array<char>(1 + ((len * 4) / 3));
-    pin_ptr<char> dst(&Dst[0]);
-    uint size = base64_encodeData( dst, src, len );
+    pin_ptr<char> dst( &Dst[0] );
+    uint size = base64_encodeData( (char*)dst, src, len );
     if( check( size ) ) {
         if( size > 0 ) gcnew String( dst, 0, size );
         else return nullptr;
@@ -636,11 +714,12 @@ Yps::Base64Api::Decode( String^ data )
     b64Frame frame;
     int pos = 0;
     len = data->Length - 4;
+    array<wchar_t>^ CHARS = data->ToCharArray();
     while (pos < len) {
-        frame.u8[0] = (byte)data[pos++];
-        frame.u8[1] = (byte)data[pos++];
-        frame.u8[2] = (byte)data[pos++];
-        frame.u8[3] = (byte)data[pos++];
+        frame.u8[0] = (byte)CHARS[pos++];
+        frame.u8[1] = (byte)CHARS[pos++];
+        frame.u8[2] = (byte)CHARS[pos++];
+        frame.u8[3] = (byte)CHARS[pos++];
         asFrame(dst) = base64_decodeFrame( frame );
         dst += 3;
     } frame.u32 = 0;
@@ -832,43 +911,88 @@ Yps::CryptBuffer::GetCrypticEnumerator( CryptKey^ use, CrypsFlags mode, int offs
 }
 
 
-generic<class T> where T : ValueType
-array<T>^ Yps::CryptBuffer::GetCopy(void) {
-    int bytesize = GetDataSize();
-    int typesize = sizeof(T);
-    int loopsize = bytesize / typesize;
-    loopsize = loopsize + (bytesize % typesize > 0 ? 1 : 0);
-    void* d = data.ToPointer();
-    switch (sizeof(T)) {
-    case 1: { array<byte>^ copy = gcnew array<byte>(loopsize); 
-        byte* src = (byte*)d;
-        for (int i = 0; i < loopsize; ++i) 
-            copy[i] = src[i];
-        return reinterpret_cast<array<T>^>(copy);
-    }
-    case 2: { array<word>^ copy = gcnew array<word>(loopsize);
-        word* src = (word*)d;
-        for (int i = 0; i < loopsize; ++i)
-            copy[i] = src[i];
-        return reinterpret_cast<array<T>^>(copy);
-    }
-    case 3: { array<Stepflow::UInt24>^ copy = gcnew array<Stepflow::UInt24>(loopsize);
-        Stepflow::UInt24* src = (Stepflow::UInt24*)d;
-        for (int i = 0; i < loopsize; ++i)
-            copy[i] = src[i];
-        return reinterpret_cast<array<T>^>(copy);
-    }
-    case 4: { array<uint>^ copy = gcnew array<uint>(loopsize);
-        uint* src = (uint*)d;
-        for (int i = 0; i < loopsize; ++i)
-            copy[i] = src[i];
-        return reinterpret_cast<array<T>^>(copy);
-    }
-    case 8: { array<ulong>^ copy = gcnew array<ulong>(loopsize);
-        ulong* src = (ulong*)d;
-        for (int i = 0; i < loopsize; ++i)
-            copy[i] = src[i];
-        return reinterpret_cast<array<T>^>(copy);
-    }
-    } return nullptr;
+#include "CryptStream.hpp"
+#include <enumoperators.h>
+
+Yps::CryptStream::CryptStream( CryptKey^ key, String^ file, Flags mode )
+{
+    flags = mode;
+    array<wchar_t>^ strg = file->ToCharArray();
+    int len = strg->Length;
+    array<char>^ Path = gcnew array<char>(len + 1);
+    for (int i = 0; i < len; ++i) {
+        Path[i] = (char)strg[i];
+    } Path[len] = '\0';
+    pin_ptr<char> path = &Path[0];
+
+    if (!enum_utils::anyFlag(Flags::Decrypt | Flags::Encrypt, flags)) {
+        if (enum_utils::hasFlag(flags, Flags::OpenWrite)) {
+            flags = enum_utils::operator|( flags, Flags::Encrypt );
+            flags = enum_utils::operator&( flags, ~Flags::OpenRead );
+        } else {
+            flags = enum_utils::operator|( flags, Flags::Decrypt|Flags::OpenRead );
+        }
+    } const char* mod = flags.HasFlag(Flags::OpenWrite) ? "wbe" : "rbd";
+
+    yps = IntPtr(crypt64_createFileStream(
+        (K64*)key->ToPointer(), (const char*)path, mod
+    ));
+}
+
+Yps::CryptStream::~CryptStream(void)
+{
+    crypt64_close((K64F*)yps.ToPointer());
+}
+
+int Yps::CryptStream::Read( array<byte>^ buffer, int offset, int count )
+{
+    pin_ptr<byte> data = &buffer[offset];
+    int written = (int)crypt64_sread( (byte*)data, 1, (uint)count, (K64F*)yps.ToPointer() );
+    int end = offset + written;
+    if(end<buffer->Length)
+        buffer[end] = '\0';
+    return written;
+}
+
+long long Yps::CryptStream::Seek(long long offset, System::IO::SeekOrigin origin)
+{
+    throw gcnew System::Exception("these cryptic streams cannot seek");
+}
+
+void Yps::CryptStream::Flush(void)
+{
+    crypt64_flush((K64F*)yps.ToPointer());
+}
+
+void Yps::CryptStream::Close(void)
+{
+    crypt64_close((K64F*)yps.ToPointer());
+}
+
+void Yps::CryptStream::SetLength(long long value)
+{
+    throw gcnew System::Exception("not implemented yet");
+}
+
+void Yps::CryptStream::Write(array<byte>^ buffer, int offset, int count)
+{
+    pin_ptr<byte> src(&buffer[offset]);
+    crypt64_swrite((const byte*)src, 1, (uint)count, (K64F*)yps.ToPointer());
+    catchError("invalid base64 data");
+    if (wasError()) throw gcnew Exception(gcnew String(getError()));
+}
+
+long long Yps::CryptStream::Length::get(void)
+{
+    return ((K64F*)yps.ToPointer())->b64.len - 12;
+}
+
+long long Yps::CryptStream::Position::get(void)
+{
+    return crypt64_position((K64F*)yps.ToPointer());
+}
+
+void Yps::CryptStream::Position::set(long long value)
+{
+    Seek(value, System::IO::SeekOrigin::Begin);
 }

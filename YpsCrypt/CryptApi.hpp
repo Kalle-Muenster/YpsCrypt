@@ -63,6 +63,11 @@ namespace Yps {
 		static UInt24    EncryptFrame24(CryptKey^ key, UInt24 frame);
 		static UInt24    DecryptFrame24(CryptKey^ key, UInt24 frame);
 
+		static int EncryptFile( CryptKey^ key, System::IO::FileInfo^ src );
+		static int DecryptFile( CryptKey^ key, System::IO::FileInfo^ src );
+
+
+
 		static property Yps::Error Error { Yps::Error get(void); };
 	};
 }
