@@ -36,11 +36,13 @@ namespace Yps
             bytesize = testdata.Length;
         }
 
-        public CrypsTests( bool verbose, bool xml ) : base( verbose, xml )
+        public CrypsTests( bool verbose, bool xml ) 
+            : base( verbose, xml )
         {
             AddTestCase("CryptBuffer", cryptingBuffer);
             AddTestCase("Base64Encoding", base64encoding, true);
             AddTestCase("Base64Decoding", base64decoding, false);
+
             AddTestCase("CreatingKeys", creatingKey);
 
             AddTestCase("Encrypting", encryptingStrings, true);
@@ -295,12 +297,10 @@ namespace Yps
             InfoStep("For testing directly decrypting a buffer, the encrypted\n             testdata output from testcase Encrypt24 is reused");
             
             // try directly decrypting cryptic data (means not returning a plaintext copy
-            // but instead decrypting that cryptic data within the containing buffer it self)
+            // but instead decrypting that cryptic data within the containing buffer inside)
             UInt24 differentVor = dat[3], differentNach;
 
             // typecast the bufer to be reinterpreted as bytes
-         //   dat.SetDataType( typeof(byte) );
-
             int size = Crypt.Decrypt24( keypassa, hdr, dat );
             Crypt.StoptEn24( keypassa );
             differentNach = dat[3];
@@ -380,25 +380,27 @@ namespace Yps
             // attach a parser which can find ocurrences of word: 'Banana' within parsed text content
             enumerator.Search = new StringSearch24( new string[]{ "Data", "~plup", "Info", "Banana", "!", "with" } );
 
-            // verify that enumerator finds all three ocurences of search text 'Banana' and
-            // both occurrences of search text 'with' AND veryfy that each occurence of these
-            // search verbs t finds, it indeed finds located at the expected byte positions
+            // verify that enumerator finds all expected ocurences of given search text verbs
+            // And veryfy that each occurence of the searched verbs it finds, it indeed finds
+            // located at the expected byte positions inside the encrypted data buffer
             int[] foundAtIndex = new int[expectedMatches+1];
             // try finding 7 expected occurencess of the search words  
             for( int i = 0; i <= expectedMatches; ++i ) {
 
                 // start running a while loop until the enumerator stops moving
                 while ( enumerator.MoveNext() );
+
+                // then evaluate the reason for which the enumerator has stopped
                 int foundcount = enumerator.Search.FoundCount;
                 if ( i < expectedMatches ) {
                     while( foundcount > 0 ) {
                         // as soon it stops, veryfy that indeed it stopped in fact of parser found text 
-                        CheckStep(enumerator.Search.Found,
+                        CheckStep( enumerator.Search.Found,
                         $"enumerator found search text '{enumerator.Search.GetSequence()}' in data");
 
                         // veryfy that parser found correct byte index inside the buffer as expected
-                        foundAtIndex[i] = enumerator.Search.FoundAt(enumerator.Position);
-                        MatchStep(foundAtIndex[i], expectations[i], "start index of found text");
+                        foundAtIndex[i] = enumerator.Search.FoundAt( enumerator.Position );
+                        MatchStep( foundAtIndex[i], expectations[i], "start index of found text" );
                         if( (foundcount = (enumerator.Search.Next()-1)) > 0 )
                             ++i;
                     }
@@ -417,7 +419,7 @@ namespace Yps
 
         public void deInitialization()
         {
-            try{ Crypt.Init(false);
+            try{ Crypt.Init( false );
                 PassStep( "De-Initialization caused no errors" );
             } catch( Exception ex ) {
                 FailStep( "De-Initialization caused crash: {0}", ex.Message );
@@ -431,72 +433,6 @@ namespace Yps
                 "YpsCryptTest", 8374368578003016900u, "This is test data which consists from a System.String which contains 90 characters of text",
                 "WiKQAJuqApQEeb64wztdjLidjLirbsArczItRzMaRPtd2Paa2PlZjPe1R5Bab4OyGCitcmATjpIeGCT+R5OdGvjaRPtd2Paa2PlZRzmdG4Ba/+Ea2Pttjvm7RzwLjLiyb3irbstr"
             );
-
-            /*
-            NextCase("CryptBuffers");
-            cryptingBuffer();
-            CloseCase(CurrentCase);
-
-            NextCase("Base64Encoding");
-            base64encoding();
-            CloseCase(CurrentCase);
-
-            NextCase("Base64Decoding");
-            base64decoding();
-            CloseCase(CurrentCase);
-
-            NextCase("CreatingKeys");
-            creatingKey();
-            CloseCase(CurrentCase);
-
-            NextCase("Encrypting");
-            encryptingStrings();
-            CloseCase(CurrentCase);
-
-            NextCase("Decrypting");
-            decryptingStrings();
-            CloseCase(CurrentCase);
-
-            NextCase("CryptingErrors");
-            cryptingErrors();
-            CloseCase(CurrentCase);
-
-            NextCase("Encrypt24");
-            encryptingDirectly();
-            CloseCase(CurrentCase);
-
-            NextCase("Decrypt24");
-            decryptingDirectly();
-            CloseCase(CurrentCase);
-
-            NextCase("BinaryEncrypting");
-            encryptingBinar();
-            CloseCase(CurrentCase);
-
-            NextCase("BinaryDecrypting");
-            decryptingBinar();
-            CloseCase(CurrentCase);
-
-            NextCase("EncryptionStream");
-            encryptStreams();
-            CloseCase(CurrentCase);
-
-            NextCase("DecryptionStream");
-            decryptStreams();
-            CloseCase(CurrentCase);
-
-            NextCase("OuterCrypticEnumerator");
-            outerCryptics();
-            CloseCase(CurrentCase);
-
-            NextCase("CryptBufferDisposal");
-            disposingBuffes();
-            CloseCase(CurrentCase);
-
-            NextCase("De-Initialization");
-            deInitialization();
-            CloseCase(CurrentCase);
-            */
         }
     }
 }
