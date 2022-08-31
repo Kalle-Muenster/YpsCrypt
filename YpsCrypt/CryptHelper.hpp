@@ -73,7 +73,8 @@ namespace Yps
 		CryptBuffer^ currentHdr(void);
 		CryptBuffer^ currentHdr(array<UInt24>^ set);
 		CryptBuffer^ currentHdr(CryptBuffer^ set);
-		
+		bool         hasHeader(void);
+
 	public:
 
 		const static CryptKey^ InvalidKey = gcnew CryptKey(unsigned long long int(0));
@@ -107,6 +108,8 @@ namespace Yps
 
 		String^ Encrypt( String^ string );
 		String^ Decrypt( String^ crypts );
+
+		void DropContext( void );
 
 		bool VerifyPhrase( String^ phrase ) {
 			return Equals( phrase );
@@ -166,9 +169,14 @@ namespace Yps
 		static void Init(bool init);
 
 		generic<class T> where T : ValueType
-		static String^   Encode( array<T>^ data );
+		static String^   EncodeW( array<T>^ data );
 		generic<class T> where T : ValueType
-		static array<T>^ Decode( String^ data );
+		static array<T>^ DecodeW( String^ data );
+
+		generic<class T> where T : ValueType
+		static array<byte>^ EncodeA( array<T>^ data );
+		generic<class T> where T : ValueType
+	    static array<T>^ DecodeA( array<byte>^ data );
 
 		static String^   EncodeString( String^ data );
 		static String^   DecodeString( String^ data );

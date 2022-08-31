@@ -136,7 +136,7 @@ namespace Yps
 
         private void base64encoding()
         {
-            b64data = Base64Api.Encode(bytesbin);
+            b64data = Base64Api.EncodeW( bytesbin );
             if (b64data != null)
                 PassStep(string.Format("calling Yps.Base.Encode<byte>() returned {0} charracters", b64data.Length));
             else
@@ -146,7 +146,7 @@ namespace Yps
         private void base64decoding()
         {
             string result = string.Empty;
-            binbacks = Base64Api.Decode<byte>( b64data );
+            binbacks = Base64Api.DecodeW<byte>( b64data );
             if (binbacks == null) {
                 FailStep(string.Format("calling Yps.Base.Decode<byte>() returned {0}", Base64Api.Error));
             } else {
@@ -184,7 +184,7 @@ namespace Yps
         {
             CryptKey wrongkey = Crypt.CreateKey( "ThisIsWrongPassWord" );
             CheckStep( wrongkey.IsValid(), "creating a key by wrong passphrase: '{0}'", "ThisIsWrongPassWord" );
-            binbacks = Crypt.Decrypt<byte>( wrongkey, b64crypt );
+            binbacks = Crypt.DecryptW<byte>( wrongkey, b64crypt );
             string result = "";
             if (binbacks == null)
                 PassStep( "calling Yps.Crypt.Decrypt() returned " + Crypt.Error.ToString() );
@@ -218,7 +218,7 @@ namespace Yps
             // case: encrypting plain strings to cryptic base64 data
 
             // encrypt the plain text string from testdata set 
-            b64crypt = Crypt.Encrypt( keypassa, bytesbin ).Substring( 0, expected.Length );
+            b64crypt = Crypt.EncryptW( keypassa, bytesbin ).Substring( 0, expected.Length );
 
             // ensure no errors are caused
             CheckStep( b64crypt != null, "calling Yps.Crypt.Encrypt() returned " + Crypt.Error.ToString() );
@@ -233,7 +233,7 @@ namespace Yps
         protected void decryptingStrings()
         {
             // try decrypting previously encrypted, base64 encoded testdata
-            binbacks = Crypt.Decrypt<byte>( keypassa, b64crypt );
+            binbacks = Crypt.DecryptW<byte>( keypassa, b64crypt );
             string result = "";
             if ( binbacks == null )
                 FailStep( "calling Yps.Crypt.Decrypt() returned " + Crypt.Error.ToString() );
@@ -281,7 +281,7 @@ namespace Yps
             UInt24 before = dat[3];
 
             hdr = Crypt.Encrypt24( keypassa, dat, false );
-            Crypt.StoptEn24( keypassa );
+            Crypt.ReleaseKey( keypassa );
 
             if ( hdr == null ) {
                 FailStep( "Yps.Crypt.Encrypt24() returned: {0}", Crypt.Error ); }
@@ -302,7 +302,7 @@ namespace Yps
 
             // typecast the bufer to be reinterpreted as bytes
             int size = Crypt.Decrypt24( keypassa, hdr, dat );
-            Crypt.StoptEn24( keypassa );
+            keypassa.DropContext();
             differentNach = dat[3];
             
             if( differentVor != differentNach )

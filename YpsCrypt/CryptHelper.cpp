@@ -7,6 +7,7 @@
 \*\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 #include "CryptHelper.hpp"
+#include "CryptApi.hpp"
 
 System::String^
 Yps::Error::ToString( void )
@@ -16,3 +17,8 @@ Yps::Error::ToString( void )
     );
 }
 
+void
+Yps::CryptKey::DropContext( void )
+{
+    Crypt::ReleaseKey( this );
+}

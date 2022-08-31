@@ -28,6 +28,8 @@ namespace Yps
 	ref class CryptKey;
 	ref class Crypt;
 
+	void ReleaseKey( CryptKey^ key );
+
 	public ref class CryptBuffer
 		: IDisposable
 	{
@@ -109,13 +111,17 @@ namespace Yps
 
 		public:
 			virtual ~CrypticEnumerator() {
+				ReleaseKey( key );
 				if (current == IntPtr::Zero) return;
 				current = IntPtr::Zero;
 				position = -1;
 				stopt += start;
 				start = 0;
 			}
-
+			virtual void Reset( void ) override {
+				position = -1;
+				ReleaseKey( key );
+			}
 			CryptBuffer^ GetHeader() {
 				return key->currentHdr();
 			}

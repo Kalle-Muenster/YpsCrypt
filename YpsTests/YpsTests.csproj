@@ -17,45 +17,56 @@
     <PackageReleaseNotes>Nope</PackageReleaseNotes>
     <NeutralLanguage></NeutralLanguage>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Nullable>warnings</Nullable>
+    <Nullable>disable</Nullable>
     <DebugType>full</DebugType>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
     <AssemblyVersion>0.0.0.1</AssemblyVersion>
     <StartupObject></StartupObject>
+    <BaseOutputPath>..\bin\core5\</BaseOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+	  <PlatformTarget>x64</PlatformTarget>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <OutputPath>..\bin\core5\x64\Debug</OutputPath>
+    <OutDir>$(BaseOutputPath)\$(PlatformTarget)\$(Configuration)</OutDir>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <OutputPath>..\bin\core5\x86\Debug</OutputPath>
+	  <PlatformTarget>x86</PlatformTarget>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	  <OutDir>$(BaseOutputPath)\$(PlatformTarget)\$(Configuration)</OutDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-    <OutputPath>..\bin\core5\x86\Release</OutputPath>
+	  <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	  <OutDir>$(BaseOutputPath)\$(PlatformTarget)\$(Configuration)</OutDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\bin\core5\x64\Release</OutputPath>
+	  <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	  <OutDir>$(BaseOutputPath)\$(PlatformTarget)\$(Configuration)</OutDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <PlatformTarget>AnyCPU</PlatformTarget>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	      <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	  <OutDir>$(BaseOutputPath)\$(PlatformTarget)\$(Configuration)</OutDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <PlatformTarget>AnyCPU</PlatformTarget>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+	      <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	  <OutDir>$(BaseOutputPath)\$(PlatformTarget)\$(Configuration)</OutDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -73,7 +84,7 @@
       <HintPath>$(Int24TypesBinRoot)\$(PlatformTarget)\$(Configuration)\Int24Types.dll</HintPath>
     </Reference>
     <Reference Include="YpsCrypt, Version=0.0.0.1">
-      <HintPath>..\bin\core5\$(PlatformTarget)\$(Configuration)\YpsCrypt.dll</HintPath>
+      <HintPath>$(OutDir)\YpsCrypt.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>

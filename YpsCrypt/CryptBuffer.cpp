@@ -8,6 +8,7 @@
 
 #include <eszentielle/.CommandlinerTypes.h>
 #include "CryptBuffer.hpp"
+#include "CryptApi.hpp"
 
 
 Yps::CryptFrame::CryptFrame( array<unsigned char>^ init, int offset, int length )
@@ -229,4 +230,10 @@ Yps::CryptBuffer::ToString( void )
 	for(int i = 0; i < len; ++i, ++ptb)
 		builder->Append( (wchar_t)*ptb );
 	return builder->ToString();
+}
+
+void
+Yps::ReleaseKey( Yps::CryptKey^ key )
+{
+	Yps::Crypt::ReleaseKey( key );
 }

@@ -18,7 +18,7 @@ if( Args.Contains("-h")
         .Put("--verbose, -v    -    generate ")
         .Put("more detailed result log which ")
         .Put("also contains PASS results\n    ")
-        .Put("--xml, -x        -    generate ")
+        .Put("--xmllogs, -x    -    generate ")
         .Put("test results as an xml document")
     .Put("\n").End();
     return 0;
@@ -33,10 +33,8 @@ StdStream.Init(
 );
 
 Test test = new CrypsTests(
-    Args.Contains("-v") ||
-    Args.Contains("--verbose"),
-    Args.Contains("--xml") ||
-    Args.Contains("-x")
+    Args.Contains("-v") || Args.Contains("--verbose"),
+    Args.Contains("-x") || Args.Contains("--xmllogs")
 ).Run();
 
 return test.wasErrors() ? -1
