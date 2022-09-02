@@ -70,51 +70,93 @@ namespace Yps
 
         private void encryptStreams()
         {
-            
-            CryptStream stream = new CryptStream( keypassa, "TestFile.yps", CryptStream.Flags.OpenWrite );
-            stream.Write( Encoding.Default.GetBytes(testdata) );
+            // create an Yps.FileStream opened for writing plain data into it 
+            Yps.FileStream stream = new Yps.FileStream( keypassa, "FileStreamTest.yps", Yps.Stream.Flags.OpenWrite );
+
+            // and write some clear text testdata into that stream
+            stream.Write( Encoding.Default.GetBytes( testdata ) );
             stream.Flush();
             stream.Close();
 
-            System.IO.FileInfo file = new System.IO.FileInfo( "TestFile.yps" );
-            CheckStep( file.Exists, "Writing into encryption stream works" );
+            // after closing the stream verify that file really exists
+            System.IO.FileInfo file = new System.IO.FileInfo( "FileStreamTest.yps" );
+            CheckStep( file.Exists, "Writing data into a cryptic file stream works" );
         }
 
         private void decryptStreams()
         {
-            CryptStream stream = new CryptStream( keypassa, "TestFile.yps", CryptStream.Flags.OpenRead );
-            int length = stream.Read( bytesbin, 0, (int)stream.Length );
-            stream.Flush();
-            stream.Close();
-            String result = Encoding.Default.GetString( bytesbin, 0, length );
+            // create an Yps.FileStream opened for reading data from it
+            Yps.FileStream file = new Yps.FileStream( keypassa, "FileStreamTest.yps", Yps.Stream.Flags.OpenRead );
+
+            // pass the opened file stream to a TextWriter constructor
+            System.IO.TextReader reader = new System.IO.StreamReader( file );
+
+            // read all cleartext string data the TextReader can get
+            string result = reader.ReadToEnd().TrimEnd();
+            reader.Close();
+            file.Close();
+
+            // verify the TextReader output string equals that testdata its originating from
             MatchStep( result, testdata, "decrypted string from stream" );
+
+            if( !Verbose ) new System.IO.FileInfo("FileStreamTest.yps").Delete();
         }
 
         private void encryptingFiles()
         {
-            System.IO.FileInfo file = new System.IO.FileInfo("YpsTests.deps.json");
-            int filesize = (int)file.Length;
-            int ypsfilesize = Crypt.EncryptFile( keypassa, file );
-            System.IO.FileInfo ypsfile = new System.IO.FileInfo("YpsTests.deps.json.yps");
-            CheckStep(file.Exists,"encrypted file '{0}' to '{1}'",file.Name,ypsfile.Name);
-            CheckStep(filesize == (ypsfilesize-12),"encrypted file has expected size");
-            file.Delete();
+            // create a file containing plaintext from testdata
+            System.IO.FileInfo txtfile = new System.IO.FileInfo( "YpsTestData.txt" );
+            System.IO.FileStream file = txtfile.OpenWrite();
+            file.Write( bytesbin );
+            file.Flush();
+            file.Close();
+            bytesize = (int)txtfile.Length;
+
+            // create an encrypted copy of that file  
+            int ypsfilesize = Crypt.EncryptFile( keypassa, txtfile );
+
+            // and verify that really an encrypted version of that file exists then
+            if( ypsfilesize < 0 ) {
+                FailStep( "Encrypting file failed: {0}", Crypt.Error.Text );
+            } else {
+                System.IO.FileInfo ypsfile = new System.IO.FileInfo( "YpsTestData.txt.yps" );
+                CheckStep( ypsfile.Exists, "encrypted file '{0}' to '{1}'", txtfile.Name, ypsfile.Name );
+            } txtfile.Delete();
+            System.Threading.Thread.Sleep( 1000 );
         }
 
         private void decryptingFiles()
         {
-            System.IO.FileInfo ypsfile = new System.IO.FileInfo("YpsTests.deps.json.yps");
+            // get cryptic file (output from testcase before)
+            System.IO.FileInfo ypsfile = new System.IO.FileInfo( "YpsTestData.txt.yps" );
             int ypssize = (int)ypsfile.Length;
-            int size = Crypt.DecryptFile( keypassa, ypsfile );
-            System.IO.FileInfo txtfile = new System.IO.FileInfo("YpsTests.deps.json");
-            CheckStep(txtfile.Exists,"decrypted file '{0}' to '{1}'",ypsfile.Name,txtfile.Name);
-            CheckStep(size == (ypssize-12), "decrypted file has expected size");
-            ypsfile.Delete();
+
+            // create a decrypted copy of that file
+            int txtsize = Crypt.DecryptFile( keypassa, ypsfile );
+
+            // veryfy decrypted version of that file really exists then
+            if (txtsize < 0 ) {
+                FailStep( "Decrypting file failed: {0}", Crypt.Error.Text );
+            } else { 
+                System.IO.FileInfo txtfile = new System.IO.FileInfo( "YpsTestData.txt" );
+                CheckStep( txtfile.Exists, "decrypted file '{0}' to '{1}'", ypsfile.Name, txtfile.Name );
+
+                // veryfy decrypted file has expected file size
+                CheckStep( txtsize <= ( ypssize - 12 ) && txtsize >= bytesize, "decrypted file has expected size" );
+
+                // compare decrypted file content against testdata once used for generating the test file
+                System.IO.FileStream file = txtfile.OpenRead();
+                binbacks = new byte[file.Length];
+                file.Read( binbacks, 0, binbacks.Length );
+                file.Close();
+                MatchStep( Encoding.Default.GetString(binbacks).Trim(), testdata, "strings", "decrypted file" );
+                if ( !Verbose ) txtfile.Delete();
+            } if( !Verbose ) ypsfile.Delete();
         }
 
         private void printVersionNumber()
         {
-            StdStream.Out.WriteLine( "YpsCrypt v. {0}", Crypt.GetVersionString() );
+            StdStream.Out.WriteLine( "YpsCrypt.dll v. {0}", Crypt.GetVersionString() );
         }
 
         private void cryptingBuffer()
@@ -138,9 +180,9 @@ namespace Yps
         {
             b64data = Base64Api.EncodeW( bytesbin );
             if (b64data != null)
-                PassStep(string.Format("calling Yps.Base.Encode<byte>() returned {0} charracters", b64data.Length));
+                PassStep(string.Format("calling Yps.Base.EncodeW() returned {0} charracters", b64data.Length));
             else
-                FailStep(string.Format("calling Yps.Base.Encode<byte>() returned {0}", Base64Api.Error));
+                FailStep(string.Format("calling Yps.Base.EncodeW() returned {0}", Base64Api.Error));
         }
 
         private void base64decoding()
@@ -148,9 +190,9 @@ namespace Yps
             string result = string.Empty;
             binbacks = Base64Api.DecodeW<byte>( b64data );
             if (binbacks == null) {
-                FailStep(string.Format("calling Yps.Base.Decode<byte>() returned {0}", Base64Api.Error));
+                FailStep(string.Format("calling Yps.Base.DecodeW<byte>() returned {0}", Base64Api.Error));
             } else {
-                PassStep(string.Format("calling Yps.Base.Decode<byte>() returned {0} charracters", b64data.Length));
+                PassStep(string.Format("calling Yps.Base.DecodeW<byte>() returned {0} charracters", b64data.Length));
                 StringBuilder bldr = new StringBuilder();
                 for (int i = 0; i < binbacks.Length; ++i) {
                     bldr.Append((char)binbacks[i]);
@@ -199,7 +241,7 @@ namespace Yps
         protected void mistakingFormat()
         {
             // try binary decryption of base64 encoded cryptic data input:
-            binbacks = Crypt.BinaryDecrypt<byte>( keypassa, Encoding.ASCII.GetBytes( b64crypt ) );
+            binbacks = Crypt.BinaryDecrypt( keypassa, Encoding.ASCII.GetBytes( b64crypt ) );
 
             // and ensure no output data is returned but error message is generated instead:
             CheckStep( binbacks == null, "calling Yps.Crypt.BinaryDecrypt() returned {0}", Crypt.Error.ToString() );
@@ -236,11 +278,11 @@ namespace Yps
             binbacks = Crypt.DecryptW<byte>( keypassa, b64crypt );
             string result = "";
             if ( binbacks == null )
-                FailStep( "calling Yps.Crypt.Decrypt() returned " + Crypt.Error.ToString() );
+                FailStep( "calling Yps.Crypt.DecryptW() returned {0}", Crypt.Error );
             else unsafe {
-                result = Encoding.ASCII.GetString(binbacks, 0, 90);
-                PassStep( "calling Yps.Crypt.Decrypt() returned " + result.Length.ToString()+ " byte" );
-            } MatchStep( result, testdata, "strings" );
+                result = Encoding.Default.GetString( binbacks, 0, 90 );
+                PassStep( "calling Yps.Crypt.DecryptW() returned {0} byte", result.Length );
+            } MatchStep( result, testdata, "decrypted data", "text" );
         }
 
 
@@ -250,7 +292,7 @@ namespace Yps
             bincrypt = Crypt.BinaryEncrypt( keypassa, bytesbin );
 
             // ensure no errors are caused
-            CheckStep( bincrypt != null, string.Format("calling Yps.Crypt.BinaryEncrypt() returned {0} bytes", bincrypt?.Length ));
+            CheckStep( bincrypt != null, "calling Yps.Crypt.BinaryEncrypt() returned {0} bytes", bincrypt?.Length );
 
             // ensure generated output of expected size
             MatchStep( bincrypt?.Length , bytesbin.Length + 12, "data size", "byte" );
@@ -264,46 +306,52 @@ namespace Yps
 
             // ensure operation was successive and no errors are caused
             if( binbacks == null ) {
-                FailStep( "calling Yps.Crypt.BinaryDecrypt() " + Crypt.Error.ToString() );
+                FailStep( "calling Yps.Crypt.BinaryDecrypt() returned: {0}", Crypt.Error );
             } else {
                 PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", binbacks.Length );
-                result = Encoding.Default.GetString( binbacks );
-                result = result.Trim();
+                result = Encoding.Default.GetString( binbacks ).Trim();
             } 
             // ensure resulting output returned is data of expected length
-            MatchStep( result, testdata, "decrypted data" );
+            MatchStep( result, testdata, "decrypted data", "text" );
         }
 
         private void encryptingDirectly()
         {
-            // try directly encrypting a passed data buffer (means not returning a cryptic copy
-            // but encrypting the passed data buffer itself )
-            UInt24 before = dat[3];
+            // try directly encrypting a passed data buffer ( means operation
+            // not returns an encrypted copy of testdata buffer but instead
+            // it encrypts the passed testdata buffer itself )
 
-            hdr = Crypt.Encrypt24( keypassa, dat, false );
-            Crypt.ReleaseKey( keypassa );
+            // take a probe from the not yet encrypted testdata buffer 
+            UInt24 before = dat[5];
 
-            if ( hdr == null ) {
-                FailStep( "Yps.Crypt.Encrypt24() returned: {0}", Crypt.Error ); }
-            else 
+            // do binary encryption on the testdata buffer
+            hdr = Crypt.Encrypt24( keypassa, dat, true );
+
+            if( hdr == null ) {
+                FailStep( "Yps.Crypt.Encrypt24() returned: {0}", Crypt.Error );
+            } else {
                 MatchStep( hdr.GetDataSize(), 12, "returned header of length" );
-            
+            }
+
+            // after encryption, take another probe of same buffer to veryfy it has changed 
             UInt24 after = dat[3];
             CheckStep( before != after, "data MUST change during encryption" );
         }
 
         private void decryptingDirectly()
         {
-            InfoStep("For testing directly decrypting a buffer, the encrypted\n             testdata output from testcase Encrypt24 is reused");
-            
             // try directly decrypting cryptic data (means not returning a plaintext copy
-            // but instead decrypting that cryptic data within the containing buffer inside)
-            UInt24 differentVor = dat[3], differentNach;
+            // but instead decrypting that cryptic data within the containing buffer itself)
 
-            // typecast the bufer to be reinterpreted as bytes
+            InfoStep("For testing direct decryption on a buffer, the cryptic\n             testdata output from Encrypt24 testcase is reused");
+            
+
+            UInt24 differentVor = dat[6], differentNach;
+
+            // apply decryption on the testcase befores output buffer which contains cryptic data 
             int size = Crypt.Decrypt24( keypassa, hdr, dat );
             keypassa.DropContext();
-            differentNach = dat[3];
+            differentNach = dat[6];
             
             if( differentVor != differentNach )
                 PassStep("data MUST change during decryption");
@@ -325,14 +373,14 @@ namespace Yps
         private void disposingBuffes()
         {
             try { dat.Dispose();
-                PassStep( "Disposing managed allocated CryptBuffer structure works" );
+                PassStep( "Disposing a managed allocated CryptBuffer structure works" );
             } catch (Exception ex) {
-                FailStep( "Disposing managed allocated CryptBuffer structure caused crash - '{0}'", ex.Message );
+                FailStep( "Disposing a managed allocated CryptBuffer structure caused crash - '{0}'", ex.Message );
             }
             try { hdr.Dispose();
-                PassStep( "Disposing externC allocated CryptBuffer structure works" );
+                PassStep( "Disposing an extern-C allocated CryptBuffer structure works" );
             } catch( Exception ex ) {
-                FailStep( "Disposing externC allocated CryptBuffer structure caused crash - '{0}'", ex.Message );
+                FailStep( "Disposing an extern-C allocated CryptBuffer structure caused crash - '{0}'", ex.Message );
             }
         }
 
@@ -368,16 +416,16 @@ namespace Yps
             int equals = 0;
             for ( int i = 0; i < cleartext.Length; ++i ) {
                 if (cryptical[i] == cleartext[i]) ++equals;
-            } if (equals > 3) FailStep("testdata incorrectly prepared equal chars {0}",equals);
+            } if (equals > 3) FailStep( "prepared testdata contains too many equal chars {0}", equals );
             else {
-                InfoStep("encrypted string:\n             {0}", cleartext );
+                InfoStep( "encrypted string:\n             {0}", cleartext );
             }
             
 
-            // test if the enumerator can find searched phrases of text within cryptic data
-            CryptBuffer.OuterCrypticEnumerator enumerator = buffer.GetOuterCrypticEnumerator(keypassa, 0);
+            // test if the enumerator can find searched phrases of cleartext within the cryptic data
+            CryptBuffer.OuterCrypticEnumerator enumerator = buffer.GetOuterCrypticEnumerator( keypassa, 0 );
 
-            // attach a parser which can find ocurrences of word: 'Banana' within parsed text content
+            // attach a parser which can find ocurrences of given cleartext strings within parsed cryptic content
             enumerator.Search = new StringSearch24( new string[]{ "Data", "~plup", "Info", "Banana", "!", "with" } );
 
             // verify that enumerator finds all expected ocurences of given search text verbs
@@ -412,7 +460,7 @@ namespace Yps
                     //   has returned 'false' by some other reason then IParser found searchtext
                     foundAtIndex[i] = -1;
                     // veryfy that parser doesn't signals search text found in case buffer end
-                    CheckStep( i == expectedMatches, $"enumerator finds exactly {i} ocurrences of search text" );
+                    CheckStep( i == expectedMatches, $"enumerator finds exactly {i} search texts" );
                 }
             }
         }

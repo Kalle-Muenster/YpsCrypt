@@ -3,6 +3,7 @@
     "YpsCryps": {
       "commandName": "Project",
       "commandLineArgs": "--verbose",
+      "workingDirectory": "$(OutDir)",
       "nativeDebugging": true
     }
   }
