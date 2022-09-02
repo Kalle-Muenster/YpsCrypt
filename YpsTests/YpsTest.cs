@@ -198,7 +198,7 @@ namespace Yps
                     bldr.Append((char)binbacks[i]);
                 } result = bldr.ToString();
             }
-            MatchStep( result.Substring(0,90), testdata.Substring(0,90), "strings" );
+            MatchStep( result.Trim(), testdata.Trim(), "strings" );
         }
 
         protected void creatingKey()
@@ -260,7 +260,7 @@ namespace Yps
             // case: encrypting plain strings to cryptic base64 data
 
             // encrypt the plain text string from testdata set 
-            b64crypt = Crypt.EncryptW( keypassa, bytesbin ).Substring( 0, expected.Length );
+            b64crypt = Crypt.EncryptW( keypassa, bytesbin ).Trim();
 
             // ensure no errors are caused
             CheckStep( b64crypt != null, "calling Yps.Crypt.Encrypt() returned " + Crypt.Error.ToString() );
@@ -280,7 +280,7 @@ namespace Yps
             if ( binbacks == null )
                 FailStep( "calling Yps.Crypt.DecryptW() returned {0}", Crypt.Error );
             else unsafe {
-                result = Encoding.Default.GetString( binbacks, 0, 90 );
+                result = Encoding.Default.GetString( binbacks ).Trim();
                 PassStep( "calling Yps.Crypt.DecryptW() returned {0} byte", result.Length );
             } MatchStep( result, testdata, "decrypted data", "text" );
         }
@@ -322,7 +322,8 @@ namespace Yps
             // it encrypts the passed testdata buffer itself )
 
             // take a probe from the not yet encrypted testdata buffer 
-            UInt24 before = dat[5];
+            int probingPosition = 5;
+            UInt24 before = dat[probingPosition];
 
             // do binary encryption on the testdata buffer
             hdr = Crypt.Encrypt24( keypassa, dat, true );
@@ -330,11 +331,11 @@ namespace Yps
             if( hdr == null ) {
                 FailStep( "Yps.Crypt.Encrypt24() returned: {0}", Crypt.Error );
             } else {
-                MatchStep( hdr.GetDataSize(), 12, "returned header of length" );
+                MatchStep( hdr.GetDataSize(), 12, "returned header of 12 byte length" );
             }
 
             // after encryption, take another probe of same buffer to veryfy it has changed 
-            UInt24 after = dat[3];
+            UInt24 after = dat[probingPosition];
             CheckStep( before != after, "data MUST change during encryption" );
         }
 
@@ -344,14 +345,14 @@ namespace Yps
             // but instead decrypting that cryptic data within the containing buffer itself)
 
             InfoStep("For testing direct decryption on a buffer, the cryptic\n             testdata output from Encrypt24 testcase is reused");
-            
 
-            UInt24 differentVor = dat[6], differentNach;
+            int probingPosition = 6;
+            UInt24 differentVor = dat[probingPosition];
 
             // apply decryption on the testcase befores output buffer which contains cryptic data 
             int size = Crypt.Decrypt24( keypassa, hdr, dat );
             keypassa.DropContext();
-            differentNach = dat[6];
+            UInt24 differentNach = dat[probingPosition];
             
             if( differentVor != differentNach )
                 PassStep("data MUST change during decryption");
@@ -361,7 +362,7 @@ namespace Yps
             if ( size <= 0 ) {
                 FailStep( "calling Yps.Crypt.Decrypt24() returned: {0}", Crypt.Error );
             } else if ( size >= testdata.Length ) {
-                PassStep( "calling Yps.Crypt.Decrypt24() returned: {0} byte", testdata.Length );
+                PassStep( "calling Yps.Crypt.Decrypt24() returned at least: {0} byte", testdata.Length );
             } else {
                 FailStep( "calling Yps.Crypt.Decrypt24() returned: {0} byte", size );
             }
