@@ -14,6 +14,7 @@ using namespace Stepflow;
 
 namespace Yps
 {
+	[FlagsAttribute()]
 	public enum class CrypsFlags
 		: unsigned char
 	{
@@ -332,7 +333,7 @@ namespace Yps
 		int GetElements() { return count; }
 		int GetTypeSize() { return size; }
 		property Int64 Length {
-			Int64 get(void) override { return GetElements(); }
+			Int64 get(void) { return GetElements(); }
 		}
 	};
 } //end of Yps

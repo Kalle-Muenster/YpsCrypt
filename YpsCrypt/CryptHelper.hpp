@@ -22,19 +22,19 @@ namespace Yps
 
 	ref class CryptBuffer;
 
-	[StructLayoutAttribute(LayoutKind::Explicit, Size = 4)]
+	[System::Runtime::InteropServices::StructLayoutAttribute( LayoutKind::Explicit, Size = 4 )]
 	public value struct CryptFrame
 	{
 	public:
 
-		[FieldOffsetAttribute(0)]
+		[System::Runtime::InteropServices::FieldOffsetAttribute(0)]
 		UInt32 b64;
-		[FieldOffsetAttribute(0)]
+		[System::Runtime::InteropServices::FieldOffsetAttribute(0)]
 		UInt24 bin;
 
 	private:
 
-		[FieldOffsetAttribute(0)]
+		[System::Runtime::InteropServices::FieldOffsetAttribute(0)]
 		unsigned char dat;
 
 	public:
@@ -139,8 +139,8 @@ namespace Yps
 	public:
 
 		const static Error NoError = Error( 0, "No Error" );
-		static String^ GetText(int error);
 
+		static  String^ GetText( int error );
 		virtual String^ ToString( void ) override;
 
 		property int Code {
@@ -194,8 +194,8 @@ namespace Yps
 	public interface class IParser
 	{
 	public:
-		property bool Found { bool get(void) abstract; }
-		property int Offset { int get(void) abstract; }
+		property bool Found { virtual bool get(void) abstract; }
+		property int Offset { virtual int get(void) abstract; }
 
 		// translate an enumerators actual index position to a byte
 		// index position where last found search text match begins
@@ -213,9 +213,9 @@ namespace Yps
 
 		// number of search verbs which had been set up by using 
 		// AddSequence() or by Construction parameter 'sequences'
-		property int VerbsCount { int get(void) abstract; }
+		property int VerbsCount { virtual int get(void) abstract; }
 
-		property int FoundCount { int get(void) abstract; }
+		property int FoundCount { virtual int get(void) abstract; }
 
 		// Prepares the search parser for searching for further 
 		// ocurrences of same search verb after finding a match
@@ -236,7 +236,6 @@ namespace Yps
 	{
 	private:
 		int          foundIndex;
-		//int          foundCount;
 		List<int>^   foundFrame;
 
 	internal: 
@@ -281,7 +280,7 @@ namespace Yps
 		}
 
 		bool Contains(T value) {
-			return sequences->Contains(value);
+			return sequences->Contains( value );
 		}
 
 		property int Count {
@@ -364,9 +363,7 @@ namespace Yps
 		SearchSequences<array<byte>^>^ search;
 
 		bool nextByte( byte nextbyte ) {
-			//if ( Found ) return true;
 			bool match = false;
-			// search->found = -1;
 			for (int i = 0; i < search->Count; ++i) {
 				int last = founds[i];
 				int next = last;
@@ -416,13 +413,13 @@ namespace Yps
 		}
 
 		property int FoundCount {
-			virtual int get(void) override {
+			virtual int get(void) {
 				return search->foundCount;
 			}
 		}
 
 		property array<byte>^ FoundSequence {
-			virtual array<byte>^ get(void) override { return search; }
+			virtual array<byte>^ get(void) { return search; }
 		}
 
 		virtual int FoundAt( int currentEnumeratorPosition ) {
@@ -432,7 +429,7 @@ namespace Yps
 		virtual void SetSequence( int at, Object^ sequence ) = IDataParser<array<byte>^,UInt24>::SetSequence {
 			Sequence[at] = safe_cast<array<byte>^>(sequence);
 		}
-		virtual void AddSequence( Object^ sequence ) = IDataParser<array<byte>^, UInt24>::AddSequence{
+		virtual void AddSequence( Object^ sequence ) = IDataParser<array<byte>^,UInt24>::AddSequence{
 			Sequence->Add( safe_cast<array<byte>^>(sequence) );
 		}
 		virtual Object^ GetSequence( int at ) = IDataParser<array<byte>^,UInt24>::GetSequence {
@@ -442,14 +439,14 @@ namespace Yps
 			return FoundSequence;
 		}
 		property int VerbsCount {
-			virtual int get(void) override { return search->Count; }
+			virtual int get(void) { return search->Count; }
 		}
 		property SearchSequences<array<byte>^>^ Sequence {
 			virtual SearchSequences<array<byte>^>^ get(void) { return search; }
 		}
 
 		DataSearch24( void ) {
-			Action<int>^ action = gcnew Action<int>(this, &DataSearch24::sequenceChanged);
+			Action<int>^ action = gcnew Action<int>(this,&DataSearch24::sequenceChanged);
 			search = gcnew SearchSequences<array<byte>^>( action, Array::Empty<byte>() );
 			bucket = gcnew List<array<byte>^>(1);
 			founds = gcnew List<int>(1);
@@ -458,7 +455,7 @@ namespace Yps
 		DataSearch24( array<array<byte>^>^ searchVerbsSet ) 
 			: DataSearch24()
 		{
-			for( int i=0; i<searchVerbsSet->Length; ++i )
+			for( int i=0; i < searchVerbsSet->Length; ++i )
 				search += searchVerbsSet[i];
 		}
 
@@ -516,9 +513,7 @@ namespace Yps
 		int             actual;
 	    
 		bool nextCharacter( wchar_t nextchar ) {
-		//	if ( Found ) return true;
 			bool match = false;
-		//	search->found = -1;
 			for (int i = 0; i < search->Count; ++i) {
 				if (search->found == i) continue;
 				int last = founds[i];
@@ -582,7 +577,7 @@ namespace Yps
 		}
 
 		property String^ FoundSequence {
-			virtual String^ get(void) override { return search; }
+			virtual String^ get(void) { return search; }
 		}
 		property SearchSequences<String^>^ Sequence {
 			virtual SearchSequences<String^>^ get( void ) { return search; }
@@ -626,7 +621,7 @@ namespace Yps
 		}
 
 		property int VerbsCount {
-			virtual int get(void) override { return search->Count; }
+			virtual int get(void) { return search->Count; }
 		}
 
 		virtual bool Parse( UInt24 next ) {

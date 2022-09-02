@@ -5,9 +5,11 @@
 ||     Generated: 28.02.2022                                 ||
 ||                                                           ||
 \*\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
-
+#include <eszentielle/.CommandlinerTypes.h>
 #include "CryptHelper.hpp"
-#include "CryptApi.hpp"
+#include "CryptBuffer.hpp"
+#include "YpsCryptApi.hpp"
+
 
 System::String^
 Yps::Error::ToString( void )
@@ -17,8 +19,121 @@ Yps::Error::ToString( void )
     );
 }
 
+static
+Yps::Base64Api::Base64Api( void )
+{
+    error = Yps::Error::NoError;
+    Init( true );
+}
+
+System::String^
+Yps::Base64Api::EncodeString( String^ data )
+{
+    return EncodeW( Encoding::Default->GetBytes(data) );
+}
+
+System::String^
+Yps::Base64Api::DecodeString( String^ data )
+{
+    return Encoding::Default->GetString( DecodeW<byte>(data) );
+}
+
+
+ //////////////////////////////////////////////////////////////
+// CryptKey
+
+Yps::CryptKey::~CryptKey( void )
+{
+    dispose( !d );
+}
+
+void*
+Yps::CryptKey::ToPointer( void )
+{
+    return k.ToPointer();
+}
+
 void
 Yps::CryptKey::DropContext( void )
 {
     Crypt::ReleaseKey( this );
+}
+
+Yps::CryptBuffer^
+Yps::CryptKey::currentHdr( void )
+{
+    return hdr;
+}
+
+Yps::CryptBuffer^
+Yps::CryptKey::currentHdr( CryptBuffer^ set )
+{
+    bool overtake = false;
+    if( set != nullptr ) {
+        if( set->GetDataSize() <= 24 && set->GetDataSize() >= 12 ) {
+            overtake = true;
+        } if( hdr != nullptr ) {
+            if( set == hdr || set->GetPointer() == hdr->GetPointer() ) {
+                return hdr;
+            } if( overtake ) {
+                hdr->~CryptBuffer();
+            }
+        } else {
+            if(!overtake ) {
+                array<byte>^ newstorage = gcnew array<byte>(12);
+                interior_ptr<byte> origin = set->AsBytes();
+                for (int i = 0; i < 12; ++i) newstorage[i] = origin[i];
+                return hdr = gcnew CryptBuffer( newstorage );
+            }
+        }
+    } else if( hdr != nullptr ) {
+        hdr->~CryptBuffer();
+    } hdr = set;
+    return hdr;
+}
+
+Yps::CryptBuffer^
+Yps::CryptKey::currentHdr( array<UInt24>^ set )
+{
+    if (set != nullptr) {
+        if (hdr == nullptr)
+            hdr = gcnew CryptBuffer(set);
+        else hdr->SetData(set);
+    } return hdr;
+}
+
+bool
+Yps::CryptKey::hasHeader( void )
+{
+    return hdr != nullptr;
+}
+
+String^
+Yps::CryptKey::Encrypt( String^ string )
+{
+    return IsValid()
+         ? Crypt::EncryptString( this, string )
+         : string;
+}
+
+String^
+Yps::CryptKey::Decrypt( String^ crypts )
+{
+    return IsValid()
+         ? Crypt::DecryptString( this, crypts )
+         : crypts;
+}
+
+Yps::CryptKey^
+Yps::Crypt::CreateKey( String^ phrase )
+{
+    array<byte>^ pd = System::Text::Encoding::Default->GetBytes( phrase );
+    pin_ptr<byte> pt( &pd[0] );
+    return gcnew CryptKey( reinterpret_cast<char*>(pt) );
+}
+
+Yps::CryptKey^
+Yps::Crypt::CreateKey( ulong hash )
+{
+    return gcnew CryptKey( hash );
 }
