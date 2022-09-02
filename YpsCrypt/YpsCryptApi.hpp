@@ -54,6 +54,7 @@ namespace Yps {
 		static array<T>^ DecryptA( CryptKey^ key, array<byte>^ crypticAString );
 
 		static bool    BeginDeString( CryptKey^ key, CryptBuffer^ crypticheader );
+
 		static String^ DecryptString( CryptKey^ key, String^ crypt_string );
 		static String^ EncryptString( CryptKey^ key, String^ plain_string );
 

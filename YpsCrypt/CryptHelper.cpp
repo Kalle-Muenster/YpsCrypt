@@ -35,7 +35,11 @@ Yps::Base64Api::EncodeString( String^ data )
 System::String^
 Yps::Base64Api::DecodeString( String^ data )
 {
-    return Encoding::Default->GetString( DecodeW<byte>(data) );
+    array<byte>^ d = DecodeW<byte>( data );
+    int l = (data->Length * 3) / 4;
+    for (int i = 0; i < l; ++i)
+        if (d[i] == 0) return Encoding::Default->GetString( d, 0, i )->Trim();
+    return Encoding::Default->GetString( d )->Trim();
 }
 
 

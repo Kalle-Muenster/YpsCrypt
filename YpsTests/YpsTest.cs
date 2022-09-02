@@ -178,25 +178,21 @@ namespace Yps
 
         private void base64encoding()
         {
-            b64data = Base64Api.EncodeW( bytesbin );
+            
+            b64data = Encoding.Default.GetString( Yps.Base64Api.EncodeA( Encoding.Default.GetBytes(testdata) ) ).Trim();
             if (b64data != null)
-                PassStep(string.Format("calling Yps.Base.EncodeW() returned {0} charracters", b64data.Length));
+                PassStep(string.Format("calling Yps.Base64Api.EncodeString() returned {0} charracters", b64data.Length));
             else
-                FailStep(string.Format("calling Yps.Base.EncodeW() returned {0}", Base64Api.Error));
+                FailStep(string.Format("calling Yps.Base64Api.EncodeString() returned {0}", Yps.Base64Api.Error ));
         }
 
         private void base64decoding()
         {
-            string result = string.Empty;
-            binbacks = Base64Api.DecodeW<byte>( b64data );
-            if (binbacks == null) {
-                FailStep(string.Format("calling Yps.Base.DecodeW<byte>() returned {0}", Base64Api.Error));
+            string result = Yps.Base64Api.DecodeString( b64data );
+            if (result == null) {
+                FailStep(string.Format("calling Yps.Base64Api.DecodeString() returned {0}", Yps.Base64Api.Error));
             } else {
-                PassStep(string.Format("calling Yps.Base.DecodeW<byte>() returned {0} charracters", b64data.Length));
-                StringBuilder bldr = new StringBuilder();
-                for (int i = 0; i < binbacks.Length; ++i) {
-                    bldr.Append((char)binbacks[i]);
-                } result = bldr.ToString();
+                PassStep(string.Format("calling Yps.Base64Api.DecodeString() returned {0} charracters", result.Length));
             }
             MatchStep( result.Trim(), testdata.Trim(), "strings" );
         }
@@ -260,10 +256,10 @@ namespace Yps
             // case: encrypting plain strings to cryptic base64 data
 
             // encrypt the plain text string from testdata set 
-            b64crypt = Crypt.EncryptW( keypassa, bytesbin ).Trim();
-
+            b64crypt = keypassa.Encrypt( testdata );
+            
             // ensure no errors are caused
-            CheckStep( b64crypt != null, "calling Yps.Crypt.Encrypt() returned " + Crypt.Error.ToString() );
+            CheckStep( b64crypt != null, "calling Yps.CryptKey.Encrypt(text) returned " + Yps.Crypt.Error );
 
             // ensure cryptic base64 output data got expected length 
             MatchStep( b64crypt.Length, expected.Length, "data size", "byte" );
@@ -275,14 +271,13 @@ namespace Yps
         protected void decryptingStrings()
         {
             // try decrypting previously encrypted, base64 encoded testdata
-            binbacks = Crypt.DecryptW<byte>( keypassa, b64crypt );
-            string result = "";
-            if ( binbacks == null )
-                FailStep( "calling Yps.Crypt.DecryptW() returned {0}", Crypt.Error );
+            string result = keypassa.Decrypt( b64crypt );
+
+            if ( result == null )
+                FailStep( "calling Yps.CryptKey.Decrypt(cryp) returned {0}", Yps.Crypt.Error );
             else unsafe {
-                result = Encoding.Default.GetString( binbacks ).Trim();
-                PassStep( "calling Yps.Crypt.DecryptW() returned {0} byte", result.Length );
-            } MatchStep( result, testdata, "decrypted data", "text" );
+                PassStep( "calling Yps.CryptKey.Decrypt(cryp) returned {0} characters", result.Length );
+            } MatchStep( result, testdata, "decrypted data" );
         }
 
 

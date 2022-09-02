@@ -127,9 +127,8 @@ Yps::Base64Api::DecodeW(String^ data)
     const int sizofT = sizeof(T);
     int len = ((data->Length * 3) / 4);
     if (len % sizofT != 0) {
-        len = (len / sizofT) + (sizofT - len % sizofT);
-    }
-    else {
+        len = (len / sizofT) + (sizofT - (len % sizofT));
+    } else {
         len /= sizofT;
     }
     array<T>^ Dst = gcnew array<T>(len);
@@ -144,78 +143,66 @@ Yps::Base64Api::DecodeW(String^ data)
         frame.u8[1] = (byte)CHARS[pos++];
         frame.u8[2] = (byte)CHARS[pos++];
         frame.u8[3] = (byte)CHARS[pos++];
-        asFrame(dst) = base64_decodeFrame(frame);
-        dst += 3;
-    } frame.u32 = 0;
-    len = data->Length;
-    int f = 0;
-    while (pos < len) {
-        frame.u8[f++] = (byte)data[pos++];
-    } while (f < 4) {
-        frame.u8[f++] = '=';
-    } frame = base64_decodeFrame(frame);
-    f = 0;
-    while (f < 3 - frame.u8[3]) {
-        *dst++ = frame.u8[f++];
-    } if (check(pos)) {
-        if (pos > 0) return Dst;
-        else return nullptr;
-    } return Dst;
+        frame = base64_decodeFrame( frame );
+        asFrame(dst) = frame;
+        if (frame.u8[3] != 0) { len = pos; break; }
+        else dst += 3;
+    }
+    if (frame.u8[3] != 0) {
+        dst[frame.u8[3]] = 0;
+        return Dst;
+    } else {
+        frame.u32 = 0;
+        len = data->Length;
+        int f = 0;
+        while (pos < len) {
+            frame.u8[f++] = (byte)data[pos++];
+        } while (f < 4) {
+            frame.u8[f++] = '=';
+        } frame = base64_decodeFrame(frame);
+        f = 0;
+        while (f < 3 - frame.u8[3]) {
+            *dst++ = frame.u8[f++];
+        } if (check(pos)) {
+            if (pos > 0) return Dst;
+            else return nullptr;
+        } return Dst;
+    }
 }
 
 generic<class T> array<byte>^
-Yps::Base64Api::EncodeA(array<T>^ data)
+Yps::Base64Api::EncodeA( array<T>^ data )
 {
-    if (fail()) return nullptr;
-    const int len = data->Length * sizeof(T);
-    pin_ptr<T> dat(&data[0]);
-    const byte* src = (const byte*)dat;
-    array<byte>^ Dst = gcnew array<byte>(1 + ((len * 4) / 3));
-    pin_ptr<byte> dst(&Dst[0]);
-    uint size = base64_encodeData((char*)dst, src, len);
-    if (check(size)) {
-        if (size > 0) return Dst;
-        else return nullptr;
-    } return Dst;
+    if( fail() ) return nullptr;
+    const uint inp_len = data->Length * sizeof(T);
+    const uint enc_len = BASE64_ENCODED_SIZE( inp_len );
+    array<byte>^ out_dat = gcnew array<byte>( enc_len + 1 );
+    pin_ptr<byte> dst_ptr( &out_dat[0] );
+    pin_ptr<T> src_ptr( &data[0] );
+    uint out_len = base64_encodeData( (char*)dst_ptr, (byte*)src_ptr, inp_len );
+    if( check(out_len) ) return nullptr;
+    else while (out_len <= enc_len)
+        out_dat[out_len++] = 0;
+    return out_dat;
 }
 
 generic<class T> array<T>^
-Yps::Base64Api::DecodeA(array<byte>^ data)
+Yps::Base64Api::DecodeA( array<byte>^ data )
 {
-    const int sizofT = sizeof(T);
-    int len = ((data->Length * 3) / 4);
-    if (len % sizofT != 0) {
-        len = (len / sizofT) + (sizofT - len % sizofT);
-    }
-    else {
-        len /= sizofT;
-    } array<T>^ Dst = gcnew array<T>(len);
-    pin_ptr<T> d(&Dst[0]);
-    byte* dst = (byte*)d;
-    pin_ptr<byte> s(&data[0]);
-    char* src = (char*)s;
-    int pos = 0;
-    len = data->Length - 4;
-    while (pos < len) {
-        asFrame(dst) = base64_decodeFrame(*(b64Frame*)src);
-        dst += 3;
-        src += 4;
-        pos += 4;
-    } b64Frame frame = { 0 };
-    len = data->Length;
-    int f = 0;
-    while (pos < len) {
-        frame.u8[f++] = (byte)data[pos++];
-    } while (f < 4) {
-        frame.u8[f++] = '=';
-    } frame = base64_decodeFrame(frame);
-    f = 0;
-    while (f < 3 - frame.u8[3]) {
-        *dst++ = frame.u8[f++];
-    } if (check(pos)) {
-        if (pos > 0) return Dst;
-        else return nullptr;
-    } return Dst;
+    if( fail() ) return nullptr;
+    const uint sizeofT = sizeof(T);
+    const uint inp_len = data->Length;
+    const uint dec_len = BASE64_DECODED_SIZE( inp_len );
+    array<T>^ out_dat = gcnew array<T>( (dec_len / sizeofT) + 1 );
+    const uint dat_len = ((dec_len / sizeofT) + 1) * sizeofT;
+    pin_ptr<T> dst_pin( &out_dat[0] );
+    byte* dst_ptr = (byte*)dst_pin;
+    pin_ptr<byte> src_ptr( &data[0] );
+    uint out_len = base64_decodeData( dst_ptr, (char*)src_ptr, inp_len );
+    if( check(out_len) ) return nullptr;
+    else while (out_len < dat_len)
+        dst_ptr[out_len++] = 0;
+    return out_dat;
 }
 
 System::UInt32
@@ -229,8 +216,6 @@ Yps::Base64Api::DecodeFrame(UInt32 frame)
 {
     return base64_decodeFrame( reinterpret_cast<b64Frame&>(frame) ).u32;
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -541,19 +526,33 @@ Yps::Crypt::DecryptFrame64( CryptKey^ key, UInt32 frame )
 String^
 Yps::Crypt::DecryptString( CryptKey^ key, String^ crypt_string )
 {
-    array<byte>^ bytes = DecryptW<byte>( key, crypt_string );
-    if (bytes == nullptr) return nullptr;
-    int i = bytes->Length;
-    while ( bytes[--i] == 0 );
-    return Encoding::Default->GetString( bytes, 0, i+1 );
+    if ( fail() ) return nullptr;
+    array<byte>^ inp_dat = Encoding::Default->GetBytes( crypt_string );
+    const uint inp_len = inp_dat->Length;
+    const uint dec_len = CRYPT64_DECRYPTED_SIZE( inp_len );
+    array<byte>^ out_dat = gcnew array<byte>( dec_len + 1 );
+    pin_ptr<byte> inp_ptr( &inp_dat[0] );
+    pin_ptr<byte> out_ptr( &out_dat[0] );
+    const uint out_len = crypt64_decrypt( (K64*)key->ToPointer(), (char*)inp_ptr, inp_len, out_ptr );
+    if ( check(out_len) ) return nullptr;
+    uint len = out_len;
+    while ( len <= dec_len ) out_dat[len++] = 0;
+    return Encoding::Default->GetString( out_dat, 0, out_len );
 }
 
 String^
 Yps::Crypt::EncryptString( CryptKey^ key, String^ plain_string )
 {
-    String^ bytes = EncryptW( key, Encoding::Default->GetBytes( plain_string ) );
-    if (bytes == nullptr) return nullptr;
-	return bytes->TrimEnd();
+    if ( fail() ) return nullptr;
+    array<byte>^ inp_dat = Encoding::Default->GetBytes( plain_string );
+    const uint inp_len = inp_dat->Length;
+    const uint enc_len = CRYPT64_ENCRYPTED_SIZE( inp_len );
+    char* out_dat = new char[enc_len + 1];
+    pin_ptr<byte> inp_ptr( &inp_dat[0] );
+    int out_len = (int)crypt64_encrypt( (K64*)key->ToPointer(), inp_ptr, inp_len, out_dat );
+    if ( check(out_len) ) return nullptr;
+    out_dat[out_len] = 0;
+    return Encoding::Default->GetString( (byte*)out_dat, out_len );
 }
 
 UInt24
