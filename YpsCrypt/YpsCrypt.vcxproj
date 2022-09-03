@@ -79,35 +79,36 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>.\;C:\CMD\CCommands;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <IncludePath>.\;..\etc;C:\CMD\CCommands;$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;..\etc;C:\CMD\CCommands;$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <LinkKeyFile>$(ProjectDir)..\YpsCrypt.snk</LinkKeyFile>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>.\;..\etc;c:\CMD\CCommands;$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;..\etc;c:\CMD\CCommands;$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>.\;..\etc;C:\CMD\CCommands;$(IncludePath)</IncludePath>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;..\etc;C:\CMD\CCommands;$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
     <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>.\;..\etc;c:\cmd\CCommands;$(IncludePath)</IncludePath>
+    <IncludePath>.\;..\etc;c:\cmd\CCommands;$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(IncludePath)</IncludePath>
     <LinkKeyFile>$(ProjectDir)..\YpsCrypt.snk</LinkKeyFile>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
+    <LibraryPath>$(SolutionDir)\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -118,7 +119,7 @@
       <AssemblerOutput>All</AssemblerOutput>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>crypt64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RegisterOutput>false</RegisterOutput>
       <Version>00000002</Version>
       <PreventDllBinding>false</PreventDllBinding>
@@ -138,7 +139,7 @@
       <AssemblerOutput>All</AssemblerOutput>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>crypt64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RegisterOutput>false</RegisterOutput>
       <Version>00000002</Version>
       <PreventDllBinding>false</PreventDllBinding>
@@ -159,7 +160,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>crypt64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <RegisterOutput>false</RegisterOutput>
       <Version>00000002</Version>
@@ -181,7 +182,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>crypt64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <Version>00000002</Version>
       <RegisterOutput>false</RegisterOutput>
