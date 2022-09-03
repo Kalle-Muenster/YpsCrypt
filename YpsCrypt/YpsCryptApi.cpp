@@ -164,7 +164,7 @@ Yps::Base64Api::DecodeW(String^ data)
             frame.u8[f++] = (byte)data[pos++];
         } while (f < 4) {
             frame.u8[f++] = '=';
-        } frame = base64_decodeFrame(frame);
+        } frame = base64_decodeFrame( frame );
         f = 0;
         while (f < 3 - frame.u8[3]) {
             *dst++ = frame.u8[f++];
@@ -184,7 +184,7 @@ Yps::Base64Api::EncodeA( array<T>^ data )
     array<byte>^ out_dat = gcnew array<byte>( enc_len + 1 );
     pin_ptr<byte> dst_ptr( &out_dat[0] );
     pin_ptr<T> src_ptr( &data[0] );
-    uint out_len = base64_encodeData( (char*)dst_ptr, (byte*)src_ptr, inp_len );
+    uint out_len = base64_encodeData( (char*)dst_ptr, (byte*)src_ptr, inp_len, 0 );
     if( check(out_len) ) return nullptr;
     else while (out_len <= enc_len)
         out_dat[out_len++] = 0;
