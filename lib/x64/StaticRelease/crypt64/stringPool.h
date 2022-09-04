@@ -8,7 +8,11 @@
 #define STRINGPOOL_API
 #endif
 #else
+#ifdef  IMPORT_STRINGPOOL_API
 #define STRINGPOOL_API __declspec(dllimport)
+#else
+#define STRINGPOOL_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 

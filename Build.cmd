@@ -8,9 +8,12 @@ set _here_=%CD%
 set _root_=%CD%
 
 :: Set VersionNumber
-set YpsCryptVersionNumber=00000001
-set YpsCryptVersionString=0.0.0.1
-set DotNetVersionString=core5
+set YpsCryptVersionNumber=00000002
+set YpsCryptVersionString=0.0.0.2
+
+if "%DotNetVersionString%"=="dot48" set DotNetVersionNumber=48
+if "%DotNetVersionString%"=="dot60" set DotNetVersionNumber=60
+if "%DotNetVersionString%"=="core5" set DotNetVersionNumber=50
 
 :: Set Dependencies
 if "%ConsolaBinRoot%"=="" (
@@ -21,7 +24,7 @@ set Int24TypesBinRoot=%_root_%\..\Int24Types\bin\%DotNetVersionString%
 )
 
 :: Set parameters and solution files
-call %_root_%\Args "%~1" "%~2" "%~3" "%~4" YpsCryps.sln YpsTests.sln
+call %_root_%\Args "%~1" "%~2" "%~3" "%~4" YpsCrypt%DotNetVersionNumber%.sln YpsTests%DotNetVersionNumber%.sln
 
 :: Do the Build
 cd %_here_%

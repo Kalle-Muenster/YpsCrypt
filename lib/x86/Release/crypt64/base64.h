@@ -8,7 +8,11 @@
 #define BASE64_API
 #endif
 #else
+#ifdef  IMPORT_BASE64_API
+#define BASE64_API __declspec(dllimport)
+#else
 #define BASE64_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 

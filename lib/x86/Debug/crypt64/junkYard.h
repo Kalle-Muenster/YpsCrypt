@@ -8,7 +8,11 @@
 #define JUNKYARD_API
 #endif
 #else
+#ifdef  IMPORT_JUNKYARD_API
+#define JUNKYARD_API __declspec(dllimport) 
+#else
 #define JUNKYARD_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 

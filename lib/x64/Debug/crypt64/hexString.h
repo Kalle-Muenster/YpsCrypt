@@ -8,7 +8,11 @@
 #define HEXHEX_API
 #endif
 #else
+#ifdef  IMPORT_HEXHEX_API
+#define HEXHEX_API __declspec(dllimport) 
+#else
 #define HEXHEX_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 

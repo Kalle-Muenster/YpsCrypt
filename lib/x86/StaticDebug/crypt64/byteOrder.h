@@ -9,7 +9,11 @@
 #define FOURCC_API
 #endif
 #else
+#ifdef  IMPORT_FOURCC_API
+#define FOURCC_API __declspec(dllimport)
+#else
 #define FOURCC_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
@@ -84,7 +88,7 @@ extern "C" {
 #define STRINGtoTAGVAR(arg) byteOrder_stringTOlongCC(arg)
 #define TAGTYPE longCC
 #else
-    FOURCC_API fourCC       byteOrder_reverse(fourCC input);
+        FOURCC_API fourCC   byteOrder_reverse(fourCC input);
 #define TAGVARtoSTRING(arg) byteOrder_fourCCtoString(arg)
 #define STRINGtoTAGVAR(arg) byteOrder_stringTOfourCC(arg)
 #define TAGTYPE fourCC

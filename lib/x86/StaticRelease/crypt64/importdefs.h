@@ -17,6 +17,8 @@ typedef signed   __int64     slong;
 typedef unsigned long long   ulong;
 #define COMMANDLINER_TYPES_IMPORTED
 #endif
+#ifndef MAX_NUM_GUM
 #define MAX_NAM_LEN (255)
 #define MAX_NUM_GUM (32)
+#endif
 #endif

@@ -9,7 +9,11 @@
 #define CRYPS64_API
 #endif
 #else
+#ifdef  IMPORT_CRYPS64_API
 #define CRYPS64_API __declspec(dllimport)
+#else
+#define CRYPS64_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 

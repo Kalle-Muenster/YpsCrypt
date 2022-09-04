@@ -3,13 +3,17 @@
 
 
 #ifdef  EXPORT_COMMANDLINER_LIBRARIES
-#ifdef  EXPORT_COMMANDLINER_API
+#ifdef  EXPORT_COMMANDLINER
 #define COMMANDLINER_API __declspec(dllexport) 
 #else
 #define COMMANDLINER_API
 #endif
 #else
+#ifdef  IMPORT_COMMANDLINER
+#define COMMANDLINER_API __declspec(dllimport)
+#else
 #define COMMANDLINER_API
+#endif
 #define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
