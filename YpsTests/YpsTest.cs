@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
+using Stepflow;
 using System.Text;
 using Consola;
-using Consola.Test;
-using Stepflow;
+
 
 namespace Yps
 {
-    public class CrypsTests : Test
+    public class CrypsTests : Consola.Test.Test
     {
         private CryptKey keypassa = Crypt.CreateKey("invalid");
         private string testdata;
@@ -67,14 +65,15 @@ namespace Yps
             AddTestCase("CryptBufferDisposal", disposingBuffes);
             AddTestCase("De-Initialization", deInitialization);
         }
-
+        
         private void encryptStreams()
         {
             // create an Yps.FileStream opened for writing plain data into it 
             Yps.FileStream stream = new Yps.FileStream( keypassa, "FileStreamTest.yps", Yps.Stream.Flags.OpenWrite );
 
             // and write some clear text testdata into that stream
-            stream.Write( Encoding.Default.GetBytes( testdata ) );
+            byte[] cleartext = Encoding.Default.GetBytes( testdata );
+            stream.Write( cleartext, 0, cleartext.Length );
             stream.Flush();
             stream.Close();
 
@@ -107,7 +106,7 @@ namespace Yps
             // create a file containing plaintext from testdata
             System.IO.FileInfo txtfile = new System.IO.FileInfo( "YpsTestData.txt" );
             System.IO.FileStream file = txtfile.OpenWrite();
-            file.Write( bytesbin );
+            file.Write( bytesbin, 0, bytesbin.Length );
             file.Flush();
             file.Close();
             bytesize = (int)txtfile.Length;
@@ -156,7 +155,7 @@ namespace Yps
 
         private void printVersionNumber()
         {
-            StdStream.Out.WriteLine( "YpsCrypt.dll v. {0}", Crypt.GetVersionString() );
+            Consola.StdStream.Out.WriteLine( "YpsCrypt.dll v. {0}", Crypt.GetVersionString() );
         }
 
         private void cryptingBuffer()

@@ -1,8 +1,6 @@
 #ifndef CRYPT64_IMPORT_HEADERS
 #define CRYPT64_IMPORT_HEADERS
 
-#include <settings.h>
-
 #include <commandLiner.h>
 #include <junkYard.h>
 #include <base64.h>

@@ -8,18 +8,15 @@
 #define STRINGPOOL_API
 #endif
 #else
+#include "importdefs.h"
 #ifdef  IMPORT_STRINGPOOL_API
 #define STRINGPOOL_API __declspec(dllimport)
 #else
 #define STRINGPOOL_API
 #endif
-#define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
 #ifdef  IMPORT_COMMANDLINER_LIBRARIES
-
-#include "importdefs.h"
-
 #define DEFAULT_POOLBOTTOM Bottom
 
 #if defined(__cplusplus)

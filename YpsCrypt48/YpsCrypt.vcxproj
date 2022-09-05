@@ -77,26 +77,37 @@
     <OutDir>$(SolutionDir)bin\dot48\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
     <TargetName>YpsCrypt</TargetName>
-    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
+    <LibraryPath>.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <LinkKeyFile>$(SolutionDir)YpsCrypt.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\dot48\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
     <TargetName>YpsCrypt</TargetName>
-    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
+    <LibraryPath>.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <LinkKeyFile>$(SolutionDir)YpsCrypt.snk</LinkKeyFile>
+    <ExecutablePath>.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
-    <LibraryPath>.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
+    <LibraryPath>.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <LinkKeyFile>$(SolutionDir)YpsCrypt.snk</LinkKeyFile>
+    <OutDir>$(SolutionDir)bin\dot48\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
+    <TargetName>YpsCrypt</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
-    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
+    <LibraryPath>.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
+    <LinkKeyFile>$(SolutionDir)YpsCrypt.snk</LinkKeyFile>
+    <OutDir>$(SolutionDir)bin\dot48\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
+    <TargetName>YpsCrypt</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -112,6 +123,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SwapRunFromNET>true</SwapRunFromNET>
     </Link>
+    <Manifest>
+      <AssemblyIdentity>Consola, Version=$(YpsCryptVersionString), Culture=neutral, processorArchitecture=x86</AssemblyIdentity>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -127,6 +141,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SwapRunFromNET>true</SwapRunFromNET>
     </Link>
+    <Manifest>
+      <AssemblyIdentity>Consola, Version=$(YpsCryptVersionString), Culture=neutral, processorArchitecture=AMD64</AssemblyIdentity>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -143,6 +160,9 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SwapRunFromNET>true</SwapRunFromNET>
     </Link>
+    <Manifest>
+      <AssemblyIdentity>Consola, Version=$(YpsCryptVersionString), Culture=neutral, processorArchitecture=x86</AssemblyIdentity>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -159,10 +179,13 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SwapRunFromNET>true</SwapRunFromNET>
     </Link>
+    <Manifest>
+      <AssemblyIdentity>Consola, Version=$(YpsCryptVersionString), Culture=neutral, processorArchitecture=AMD64</AssemblyIdentity>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="Int24Types">
-      <HintPath>..\..\..\PROJECTS\GITSPACE\Int24Types\bin\dot48\x86\Debug\Int24Types.dll</HintPath>
+      <HintPath>$(Int24TypesBinRoot)\$(PlatformTarget)\$(Configuration)\Int24Types.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -188,13 +211,7 @@
     <ClCompile Include="AssemblyInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="app.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="app.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

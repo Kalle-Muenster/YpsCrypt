@@ -9,17 +9,16 @@
 #define COMMANDLINER_API
 #endif
 #else
+#include "importdefs.h"
 #ifdef  IMPORT_COMMANDLINER
 #define COMMANDLINER_API __declspec(dllimport)
 #else
 #define COMMANDLINER_API
 #endif
-#define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
 #ifdef IMPORT_COMMANDLINER_LIBRARIES
 
-#include "importdefs.h"
 
 #define COMMANDER_BUFFER ((MAX_NUM_GUM+1)*MAX_NAM_LEN+1)
 

@@ -90,7 +90,7 @@
     <IncludePath>.\;.\..\lib;.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;.\..\src;$(IncludePath)</IncludePath>
     <LibraryPath>.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
+    <LinkKeyFile>$(ProjectDir)..\YpsCrypt.snk</LinkKeyFile>
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -99,7 +99,7 @@
     <LibraryPath>.\..\lib\$(PlatformTarget)\Static$(Configuration)\crypt64;$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)..\bin\core5\$(PlatformTarget)\$(Configuration)\</OutDir>
     <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
-    <LinkKeyFile>$(ProjectDir)..\YpsKeys.snk</LinkKeyFile>
+    <LinkKeyFile>$(ProjectDir)..\YpsCrypt.snk</LinkKeyFile>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -127,7 +127,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
-      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=x86</AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=x86, PublicKeyToken=117bcc565174e2bb</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -147,7 +147,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
-      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=AMD64</AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=AMD64, PublicKeyToken=117bcc565174e2bb</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -169,7 +169,7 @@
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <Manifest>
-      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=x86</AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=x86, PublicKeyToken=117bcc565174e2bb</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -191,7 +191,7 @@
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <Manifest>
-      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=AMD64</AssemblyIdentity>
+      <AssemblyIdentity>YpsCrypt, Version=0.0.0.2, Culture=neutral, processorArchitecture=AMD64, PublicKeyToken=117bcc565174e2bb</AssemblyIdentity>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>

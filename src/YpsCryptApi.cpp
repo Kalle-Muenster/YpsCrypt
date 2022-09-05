@@ -240,7 +240,7 @@ Yps::CryptKey::IsValid( void )
 {
     bool valid = k != IntPtr::Zero;
     if ( valid ) valid = Hash > 0;
-    if ( valid ) valid = (bool)crypt64_isValidKey( static_cast<K64*>( k.ToPointer() ) );  
+    if ( valid ) valid = crypt64_isValidKey( static_cast<K64*>( k.ToPointer() ) ) > 0;  
     return valid;
 }
 
@@ -745,7 +745,7 @@ Yps::Crypt::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
 bool
 Yps::Crypt::ReleaseKey( Yps::CryptKey^ key )
 {
-    return crypt64_releaseContext( (K64*)key->ToPointer() );
+    return crypt64_releaseContext( (K64*)key->ToPointer() ) > 0;
 }
 
 int
@@ -915,7 +915,7 @@ int
 Yps::FileStream::Read( array<byte>^ buffer, int offset, int count )
 {
     pin_ptr<byte> data = &buffer[offset];
-    int threshold = ((( Length - Position ) * 4) / 3);
+    int threshold = (int)((( Length - Position ) * 4) / 3);
     if (threshold <= count) {
         count = ((threshold * 3) / 4);
         threshold = (int)crypt64_nonbuffered_sread( (byte*)data, 1u, uint(count), (K64F*)yps.ToPointer() );

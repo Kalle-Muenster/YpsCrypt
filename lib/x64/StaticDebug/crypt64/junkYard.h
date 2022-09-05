@@ -8,16 +8,15 @@
 #define JUNKYARD_API
 #endif
 #else
+#include "importdefs.h"
 #ifdef  IMPORT_JUNKYARD_API
 #define JUNKYARD_API __declspec(dllimport) 
 #else
 #define JUNKYARD_API
 #endif
-#define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
 #ifdef  IMPORT_COMMANDLINER_LIBRARIES
-#include "importdefs.h"
 #if defined(__cplusplus)
 extern "C" {
 #endif

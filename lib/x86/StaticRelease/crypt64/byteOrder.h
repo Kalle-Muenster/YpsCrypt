@@ -9,17 +9,16 @@
 #define FOURCC_API
 #endif
 #else
+#include "importdefs.h"
 #ifdef  IMPORT_FOURCC_API
 #define FOURCC_API __declspec(dllimport)
 #else
 #define FOURCC_API
 #endif
-#define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
 #ifdef  IMPORT_COMMANDLINER_LIBRARIES
 
-#include "importdefs.h"
 
 #if defined(__cplusplus)
 extern "C" {

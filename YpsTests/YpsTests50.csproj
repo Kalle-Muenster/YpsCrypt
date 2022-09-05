@@ -72,20 +72,33 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Program.cs" />
+    <Compile Remove="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
+    <None Include="..\YpsCrypt.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="Program.cs" />
+    <None Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Consola">
       <HintPath>$(ConsolaBinRoot)\$(PlatformTarget)\$(Configuration)\Consola.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Consola.Test">
       <HintPath>$(ConsolaBinRoot)\$(PlatformTarget)\$(Configuration)\Consola.Test.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Int24Types">
       <HintPath>$(Int24TypesBinRoot)\$(PlatformTarget)\$(Configuration)\Int24Types.dll</HintPath>
     </Reference>
-    <Reference Include="YpsCrypt, Version=0.0.0.2">
+    <Reference Include="YpsCrypt">
       <HintPath>$(OutDir)\YpsCrypt.dll</HintPath>
       <Private>True</Private>
     </Reference>

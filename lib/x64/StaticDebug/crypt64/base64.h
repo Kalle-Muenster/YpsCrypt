@@ -8,18 +8,17 @@
 #define BASE64_API
 #endif
 #else
+#include "importdefs.h"
 #ifdef  IMPORT_BASE64_API
 #define BASE64_API __declspec(dllimport)
 #else
 #define BASE64_API
 #endif
-#define IMPORT_COMMANDLINER_LIBRARIES (true)
 #endif
 
 #ifdef  IMPORT_COMMANDLINER_LIBRARIES
 
 #include <stdio.h>
-#include "importdefs.h"
 
 #if defined(__cplusplus)
 extern "C" {

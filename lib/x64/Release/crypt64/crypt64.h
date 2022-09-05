@@ -9,6 +9,7 @@
 #define CRYPS64_API
 #endif
 #else
+#include "importdefs.h"
 #ifdef  IMPORT_CRYPS64_API
 #define CRYPS64_API __declspec(dllimport)
 #else
@@ -18,7 +19,7 @@
 #endif
 
 #ifdef IMPORT_COMMANDLINER_LIBRARIES
-#include "importdefs.h"
+
 #include <stdio.h>
 
 #if defined(__cplusplus)
@@ -80,8 +81,8 @@ extern "C" {
     CRYPS64_API ulong    crypt64_currentContext( void );
     CRYPS64_API K64F*    crypt64_createFileStream(K64* key, const char* path, const char* mode);
     CRYPS64_API uint     crypt64_sread( byte* dst, uint size, uint count, K64F* cryps);
-    CRYPS64_API uint     crypt64_swrite( byte* src, uint size, uint count, K64F* cryps);
     CRYPS64_API uint     crypt64_nonbuffered_sread( byte* dst, uint size, uint count, K64F* cryps );
+    CRYPS64_API uint     crypt64_swrite( const byte* src, uint size, uint count, K64F* cryps);
     CRYPS64_API k64Chunk crypt64_getYps(K64F* vonDa);
     CRYPS64_API uint     crypt64_putYps(k64Chunk dieses, K64F* nachDa);
     CRYPS64_API int      crypt64_frameSize(K64F* stream);
