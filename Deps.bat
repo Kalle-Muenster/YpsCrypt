@@ -10,8 +10,9 @@ set DotnetVersionString=dot48
 goto END
 )
 
-set ConsolaProject=%~dp0..\Consola\ConsolaCore5
-set Int24TypesProject=%~dp0..\Int24Types\core5
+set ConsolaProject=%~dp0..\Consola\Consola%DotnetVersionString%
+set Int24TypesProject=%~dp0..\Int24Types\%DotnetVersionString%
+
 
 set ARCH=%~1
 set CONF=%~2
