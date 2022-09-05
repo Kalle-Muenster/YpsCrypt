@@ -1,5 +1,15 @@
 @echo off
 
+if "%~1"=="core5" (
+set DotnetVersionString=core5
+goto END
+)
+
+if "%~1"=="dot48" (
+set DotnetVersionString=dot48
+goto END
+)
+
 set ConsolaProject=%~dp0..\Consola\ConsolaCore5
 set Int24TypesProject=%~dp0..\Int24Types\core5
 
@@ -24,3 +34,4 @@ popd
 set ARCH=
 set CONF=
 set CLEAN=
+:END
