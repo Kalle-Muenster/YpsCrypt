@@ -206,8 +206,6 @@ namespace Yps
 
             }
             MatchStep( result, testdata, "strings" );
-            MatchStep( result.Trim(), testdata, "trimmed strings" );
-            MatchStep( result.Substring(0,testdata.Length), testdata, "chopped strings" );
         }
 
         protected void creatingKey()
