@@ -22,14 +22,14 @@ namespace Yps {
 	{
 	private:
 		static volatile bool runs;
-		static Error error;
 		static bool check( unsigned size );
 		static bool fail();
 
 	internal:
+		static Error error;
 		static bool chkHeader24( CryptKey^ key, CryptBuffer^ hdr );
 		static bool useHeader24( CryptKey^ key, CryptBuffer^ hdr );
-		static IntPtr createFileStream( CryptKey^ key, String^ filename, unsigned mode );
+		static void headerDtorFunc( IntPtr data );
 
 	public:
 		static Crypt();
@@ -47,11 +47,11 @@ namespace Yps {
 		generic<class T> where T : ValueType
 		static String^ EncryptW( CryptKey^ key, array<T>^ data );
 		generic<class T>  where T : ValueType
-		static array<byte>^ EncryptA( CryptKey^ key, array<T>^ data );
+		static ArraySegment<byte> EncryptA( CryptKey^ key, array<T>^ data );
 		generic<class T> where T : ValueType
-		static array<T>^ DecryptW( CryptKey^ key, String^ crypticWString );
+		static ArraySegment<T> DecryptW( CryptKey^ key, String^ crypticWString );
 		generic<class T> where T : ValueType
-		static array<T>^ DecryptA( CryptKey^ key, array<byte>^ crypticAString );
+		static ArraySegment<T> DecryptA( CryptKey^ key, array<byte>^ crypticAString );
 
 		static bool    BeginDeString( CryptKey^ key, CryptBuffer^ crypticheader );
 
@@ -62,13 +62,13 @@ namespace Yps {
 		static UInt24    DecryptFrame64( CryptKey^ key, UInt32 frame );
 
 		generic<class T> where T : ValueType
-		static array<T>^ BinaryEncrypt( CryptKey^ key, array<T>^ data );
+		static ArraySegment<T> BinaryEncrypt( CryptKey^ key, array<T>^ data );
 		generic<class T> where T : ValueType
-		static array<T>^ BinaryDecrypt( CryptKey^ key, array<T>^ cryp );
+		static ArraySegment<T> BinaryDecrypt( CryptKey^ key, array<T>^ cryp );
 
 		static CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data ) { return Encrypt24( key, data, true ); }
 		static CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete );
-		static bool ReleaseKey( CryptKey^ key );
+		
 
 		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata );
 		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata, bool checkHeader );

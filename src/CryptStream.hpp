@@ -32,12 +32,12 @@ namespace Yps {
             bool get(void) override { return flags.HasFlag( Flags::OpenWrite ); }
         };
 
-        virtual int Write_SizeChecked( array<byte>^ buffer, int offset, int count ) abstract;
+        virtual int SizeCheckedWrite( array<byte>^ buffer, int offset, int count ) abstract;
         virtual void PutFrame( UInt24 frame ) abstract;
         virtual UInt24 GetFrame( void ) abstract;
 
     protected:
-        CryptKey^    key;
+        CryptKey^    crypt;
         Flags        flags;
         int          bytes;
         array<byte>^ frame;
@@ -69,12 +69,13 @@ namespace Yps {
         virtual long long Seek( long long offset, System::IO::SeekOrigin origin ) override;
         virtual void SetLength( long long value ) override;
         virtual void Write( array<byte>^ buffer, int offset, int count ) override;
-        virtual int  Write_SizeChecked( array<byte>^ buffer, int offset, int count ) override;
+        virtual int  SizeCheckedWrite( array<byte>^ buffer, int offset, int count ) override;
         virtual void PutFrame( UInt24 frame ) override;
         virtual UInt24 GetFrame( void ) override;
 
     private:
-        IntPtr  yps;
+        static IntPtr crypticFopen( CryptKey^ key, String^ nam, unsigned mod );
+        IntPtr  file;
     };
 
 } //end of Yps

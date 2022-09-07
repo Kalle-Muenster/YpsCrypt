@@ -43,7 +43,7 @@ namespace Yps
 		CryptFrame(array<unsigned char>^ init, int offset, int length);
 		CryptFrame(interior_ptr<unsigned char> init, int offset, int length);
 
-		operator UInt24 % (void) {
+		operator UInt24% (void) {
 			return bin;
 		}
 
@@ -73,7 +73,7 @@ namespace Yps
 		CryptBuffer^ currentHdr(void);
 		CryptBuffer^ currentHdr(array<UInt24>^ set);
 		CryptBuffer^ currentHdr(CryptBuffer^ set);
-		bool         hasHeader(void);
+		bool          hasHeader(void);
 
 	public:
 
@@ -109,77 +109,87 @@ namespace Yps
 		String^ Encrypt( String^ string );
 		String^ Decrypt( String^ crypts );
 
-		void DropContext( void );
-
+		void RemoveContext( void );
+		bool Release( void );
 		bool VerifyPhrase( String^ phrase ) {
 			return Equals( phrase );
 		}
 	};
 
+	ref class Cleansener
+		: public IDisposable
+	{
+	private:
 
+		static volatile int shuttingdown = 0;
+		bool wirdWegGeloescht;
+		void Weggeloescht( bool sollwech );
+
+	public:
+				 Cleansener();
+		virtual ~Cleansener();
+		static property bool Shuttown {
+			bool get(void);
+			void set(bool value);
+		}
+	};
+	
 	public value struct Error
 	{
 	private:
 	
-		int     code;
+		uint    code;
 		String^ text;
 	
 	internal:
-	
-		Error( int eCode, const char* eText )
-			: code(eCode)
-			, text(gcnew String(eText)) {
-		}
-		Error( int eCode, const char* eText, unsigned ePosition )
-			: code(eCode)
-			, text(String::Format("{0} at position {1}",
-				   gcnew String(eText), ePosition)) {
-		}
+
+		Error( uint eCode );
+		Error( uint eCode, const char* eText );
+		Error( uint eCode, const char* eText, uint ePosition );
 
 	public:
 
-		const static Error NoError = Error( 0, "No Error" );
+		const static Error NoError = Error( 0u, "No Error" );
 
 		static  String^ GetText( int error );
 		virtual String^ ToString( void ) override;
 
-		property int Code {
-			int get(void) { return code; }
-		};
-		property String^ Text {
-			String^ get(void) { return text; }
-		};
-		static operator bool( Error cast ) {
-			return cast.code != 0;
-		}
+		property int Code { int get(void) { return code; } }
+		property String^ Text {	String^ get(void); }
+		static operator bool( Error cast ) { return cast.code != 0; }
 	};
 
 
-	public ref class Base64Api
+	public ref class Base64
 	{
 	private:
 	
 		static Error error;
 		static bool  check( unsigned size );
 		static bool  fail( void );
+		static void  Init( bool init );
 
 	public:
 
-		static Base64Api();
-		static void Init(bool init);
-
+		static Base64();
+		
 		generic<class T> where T : ValueType
 		static String^   EncodeW( array<T>^ data );
 		generic<class T> where T : ValueType
-		static array<T>^ DecodeW( String^ data );
+		static ArraySegment<T> DecodeW( String^ data );
 
 		generic<class T> where T : ValueType
-		static array<byte>^ EncodeA( array<T>^ data );
+		static ArraySegment<byte> EncodeA( array<T>^ data );
 		generic<class T> where T : ValueType
-	    static array<T>^ DecodeA( array<byte>^ data );
+	    static ArraySegment<T> DecodeA( array<byte>^ data );
 
 		static String^   EncodeString( String^ data );
 		static String^   DecodeString( String^ data );
+
+		static CryptBuffer^ Encode( CryptBuffer^ data );
+		static CryptBuffer^ Encode( CryptBuffer^ data, int size );
+		static CryptBuffer^ Decode( CryptBuffer^ data );
+		static CryptBuffer^ Decode( CryptBuffer^ data, int size );
 
 		static UInt32    EncodeFrame( UInt24 frame );
 		static UInt24    DecodeFrame( UInt32 frame );
@@ -232,13 +242,16 @@ namespace Yps
 		E Check( E next ) abstract;
 	};
 	 
-	generic<class T> public ref class SearchSequences
+	generic<class T>
+	public ref class SearchSequences
 	{
 	private:
+
 		int          foundIndex;
 		List<int>^   foundFrame;
 
-	internal: 
+	internal:
+
 		List<T>^     sequences;
 		Action<int>^ trigger;
 		T            nuller;
@@ -271,6 +284,7 @@ namespace Yps
 		}
 
 	public:
+
 		SearchSequences( Action<int>^ notify, T nuller ) {
 			sequences = gcnew List<T>(1);
 			this->nuller = nuller;
@@ -356,307 +370,111 @@ namespace Yps
 		: public IDataParser<array<byte>^,UInt24>
 	{
 	private:
+
 		CryptFrame          framed;
 		int                 actual;
 		List<int>^          founds;
 		List<array<byte>^>^ bucket;
 		SearchSequences<array<byte>^>^ search;
 
-		bool nextByte( byte nextbyte ) {
-			bool match = false;
-			for (int i = 0; i < search->Count; ++i) {
-				int last = founds[i];
-				int next = last;
-				array<byte>^ verb = search[i];
-				if (verb[last] == nextbyte) {
-					array<byte>^ fill = bucket[i];
-					fill[next++] = nextbyte;
-					match = true;
-					if (next == fill->Length) {
-						search->found = i;
-						search->incrementfound();
-						search->actual = actual;
-					}
-				} else next = 0;
-				founds[i] = next;
-			} return match;
-		}
-
-		void sequenceChanged(int atIndex)
-		{
-			if (atIndex < 0) {
-				founds->RemoveAt(-atIndex);
-				bucket->RemoveAt(-atIndex);
-			}
-			else if (bucket->Count == atIndex) {
-				bucket->Add(gcnew array<byte>(search[atIndex]->Length));
-				founds->Add(0);
-			}
-			else {
-				bucket[atIndex] = gcnew array<byte>(search[atIndex]->Length);
-				founds[atIndex] = 0;
-			}
-		}
+		bool nextByte( byte nextbyte );
+		void sequenceChanged( int atIndex );
 
 	public:
+		
+		DataSearch24(void);
+		DataSearch24(array<array<byte>^>^ searchVerbsSet);
+		DataSearch24(array<byte>^ sequence);
 
 		property int Offset {
-			virtual int get(void) = IDataParser<array<byte>^,UInt24>::Offset::get {
-				if (Found) {
-					return (3 + (search->actual - (((array<byte>^)search)->Length % 3))) % 3;
-				} else return -1;
-			}
+			virtual int get(void) = IDataParser<array<byte>^,UInt24>::Offset::get;
 		}
 
 		property bool Found {
-			virtual bool get(void) { return search->found >= 0; }
+			virtual bool get(void);
 		}
 
 		property int FoundCount {
-			virtual int get(void) {
-				return search->foundCount;
-			}
+			virtual int get(void);
 		}
 
 		property array<byte>^ FoundSequence {
-			virtual array<byte>^ get(void) { return search; }
+			virtual array<byte>^ get(void);
 		}
 
-		virtual int FoundAt( int currentEnumeratorPosition ) {
-			return ( ( currentEnumeratorPosition - (((array<byte>^)search)->Length / 3) ) * 3 ) + (( Offset + 1 ) % 3);
-		}
-
-		virtual void SetSequence( int at, Object^ sequence ) = IDataParser<array<byte>^,UInt24>::SetSequence {
-			Sequence[at] = safe_cast<array<byte>^>(sequence);
-		}
-		virtual void AddSequence( Object^ sequence ) = IDataParser<array<byte>^,UInt24>::AddSequence{
-			Sequence->Add( safe_cast<array<byte>^>(sequence) );
-		}
-		virtual Object^ GetSequence( int at ) = IDataParser<array<byte>^,UInt24>::GetSequence {
-			return Sequence[at];
-		}
-        virtual Object^ GetSequence( void ) = IDataParser<array<byte>^,UInt24>::GetSequence{
-			return FoundSequence;
-		}
 		property int VerbsCount {
-			virtual int get(void) { return search->Count; }
+			virtual int get(void);
 		}
+
 		property SearchSequences<array<byte>^>^ Sequence {
-			virtual SearchSequences<array<byte>^>^ get(void) { return search; }
+			virtual SearchSequences<array<byte>^>^ get(void);
 		}
 
-		DataSearch24( void ) {
-			Action<int>^ action = gcnew Action<int>(this,&DataSearch24::sequenceChanged);
-			search = gcnew SearchSequences<array<byte>^>( action, Array::Empty<byte>() );
-			bucket = gcnew List<array<byte>^>(1);
-			founds = gcnew List<int>(1);
-		}
 
-		DataSearch24( array<array<byte>^>^ searchVerbsSet ) 
-			: DataSearch24()
-		{
-			for( int i=0; i < searchVerbsSet->Length; ++i )
-				search += searchVerbsSet[i];
-		}
+		virtual void    SetSequence(int at, Object^ sequence) = IDataParser<array<byte>^, UInt24>::SetSequence;
+		virtual void    AddSequence(Object^ sequence) = IDataParser<array<byte>^, UInt24>::AddSequence;
+		virtual Object^ GetSequence(int at) = IDataParser<array<byte>^, UInt24>::GetSequence;
+		virtual Object^ GetSequence(void) = IDataParser<array<byte>^, UInt24>::GetSequence;
 
-		DataSearch24( array<byte>^ sequence )
-			: DataSearch24()
-		{
-			search += sequence;
-		}
-
-		virtual bool Parse( UInt24 next ) {
-			framed.bin = next;
-			search->found = -1;
-			bool justFound = false;
-			for (actual = 0; actual < 3; ++actual)
-				if (nextByte(framed[actual]))
-					if (Found) justFound = true;
-			return justFound;
-		}
-
-		virtual UInt24 Check( UInt24 next ) {
-			framed.bin = next;
-			search->found = -1;
-			bool justFund = false;
-			for (actual = 0; actual < 3; ++actual)
-				nextByte( framed[actual] );
-			return next;
-		}
-
-		virtual int Next( void ) {
-			int count = search->foundCount;
-			if ( count > 0 ) {
-				array<byte>^ ar = bucket[search->found];
-				ar->Clear( ar, 0, ar->Length );
-				framed.bin = UInt24::MinValue;
-				founds[search->found] = 0;
-				search->found = -1;
-				if (count > 1) {
-					for (int i = 0; i < VerbsCount; ++i) {
-						if (founds[i] == bucket[i]->Length)
-							search->found = i;
-					}
-				}
-			} return count;
-		}
+		virtual int     FoundAt(int currentEnumeratorPosition);
+		virtual bool    Parse(UInt24 next);
+		virtual UInt24  Check(UInt24 next);
+		virtual int     Next(void);
 	};
 
 	public ref class StringSearch24
 		: public IDataParser<String^,UInt24>
 	{
 	private:
-		CryptFrame      framed;
-		List<array<wchar_t>^>^ bucket;
-		List<int>^      founds;
-		SearchSequences<String^>^ search;
-		int             actual;
-	    
-		bool nextCharacter( wchar_t nextchar ) {
-			bool match = false;
-			for (int i = 0; i < search->Count; ++i) {
-				if (search->found == i) continue;
-				int last = founds[i];
-				int next = last;
-				String^ verb = search[i];
-				if ( verb[last] == nextchar ) {
-					array<wchar_t>^ fill = bucket[i];
-					fill[next++] = nextchar;
-					match = true;
-					if (next == fill->Length) {
-						search->found = i;
-						search->incrementfound();
-						search->actual = actual;
-					}
-				} else next = 0;
-				founds[i] = next;
-			} return match;
-		}
 
-		void sequenceChanged( int atIndex ) {
-			if ( atIndex < 0 ) {
-				founds->RemoveAt( -atIndex );
-				bucket->RemoveAt( -atIndex );
-			} else if ( bucket->Count == atIndex ) {
-				array<wchar_t>^ ar = search[atIndex]->ToCharArray();
-				for (int i = 0; i < ar->Length; ++i) ar[i] = '\0';
-				bucket->Add(ar);
-				founds->Add(0);
-		    } else {
-				array<wchar_t>^ ar = search[atIndex]->ToCharArray();
-				for (int i = 0; i < ar->Length; ++i) ar[i] = '\0';
-				bucket[atIndex] = ar;
-				founds[atIndex] = 0;
-			}
-		}
+		CryptFrame                framed;
+		List<array<wchar_t>^>^    bucket;
+		List<int>^                founds;
+		SearchSequences<String^>^ search;
+		int                       actual;
+	    
+		bool nextCharacter(wchar_t nextchar);
+		void sequenceChanged(int atIndex);
 
 	public:
 
+		StringSearch24(void);
+		StringSearch24(String^ searchForSequence);
+		StringSearch24(array<String^>^ searchForSequences);
+
 		property int Offset {
-			virtual int get( void ) = IDataParser<String^,UInt24>::Offset::get {
-				if (Found) {
-					return (3 + (search->actual - (((String^)search)->Length % 3))) % 3;
-				} else return -1;
-			}
+			virtual int get(void) = IDataParser<String^, UInt24>::Offset::get;
 		}
 
 		property bool Found {
-			virtual bool get(void) { return search->found >= 0; }
+			virtual bool get(void);
 		}
 
 		property int FoundCount {
-			virtual int get(void) {
-				return search->foundCount;
-			}
-		}
-
-		virtual int FoundAt( int currentFrame ) {
-			return search->found >= 0 
-				 ? ( ( currentFrame - (((String^)search)->Length / 3)) * 3) + ( ( Offset + 1 ) % 3 ) 
-				 : search->found;
-		}
-
-		property String^ FoundSequence {
-			virtual String^ get(void) { return search; }
-		}
-		property SearchSequences<String^>^ Sequence {
-			virtual SearchSequences<String^>^ get( void ) { return search; }
-		}
-
-		StringSearch24( void ) {
-			Action<int>^ action = gcnew Action<int>( this, &StringSearch24::sequenceChanged );
-			search = gcnew SearchSequences<String^>( action, String::Empty );
-			bucket = gcnew List<array<wchar_t>^>(1);
-			founds = gcnew List<int>(1);
-		}
-
-		StringSearch24( String^ searchForSequence )
-			: StringSearch24() {
-			search += searchForSequence;
-		}
-
-		StringSearch24( array<String^>^ searchForSequences ) {
-			Action<int>^ action = gcnew Action<int>(this, &StringSearch24::sequenceChanged);
-			search = gcnew SearchSequences<String^>( action, String::Empty );
-			bucket = gcnew List<array<wchar_t>^>(searchForSequences->Length);
-			founds = gcnew List<int>(searchForSequences->Length);
-			for(int i=0;i< searchForSequences->Length;++i)
-				search += searchForSequences[i];
-		}
-
-		virtual void SetSequence( int at, Object^ sequence ) = IDataParser<String^,UInt24>::SetSequence {
-			search[at] = safe_cast<String^>( sequence );
-		}
-
-		virtual void AddSequence( Object^ add ) = IDataParser<String^, UInt24>::AddSequence{
-			search += safe_cast<String^>( add );
-		}
-
-		virtual Object^ GetSequence( int at ) = IDataParser<String^,UInt24>::GetSequence {
-			return search[at];
-		}
-
-		virtual Object^ GetSequence( void ) = IDataParser<String^, UInt24>::GetSequence{
-			return FoundSequence;
+			virtual int get(void);
 		}
 
 		property int VerbsCount {
-			virtual int get(void) { return search->Count; }
+			virtual int get(void);
 		}
 
-		virtual bool Parse( UInt24 next ) {
-			framed.bin = next;
-			search->found = -1;
-			bool just = false;
-			for (actual = 0; actual < 3; ++actual)
-				if ( nextCharacter( (char)framed[actual] ) )
-					if (!just) if( Found ) just = true;
-			return just;
+		property String^ FoundSequence {
+			virtual String^ get(void);
 		}
 
-		virtual UInt24 Check( UInt24 next ) {
-			framed.bin = next;
-			search->found = -1;
-			for (actual = 0; actual < 3; ++actual)
-				nextCharacter( framed[actual] );
-			return next;
+		property SearchSequences<String^>^ Sequence {
+			virtual SearchSequences<String^>^ get(void);
 		}
 
-		virtual int Next( void ) {
-			int  lastFound = search->foundCount;
-			if ( lastFound > 0 ) {
-				array<wchar_t>^ ar = bucket[search->found];
-				ar->Clear(ar, 0, ar->Length);
-				framed.bin = UInt24::MinValue;
-				founds[search->found] = 0;
-				search->found = -1;
-				if (lastFound > 1) {
-					for (int i = 0; i < VerbsCount; ++i) {
-						search->found = i;
-					}
-				}
-			} return lastFound;
-		}
+		virtual void    SetSequence(int at, Object^ sequence) = IDataParser<String^, UInt24>::SetSequence;
+		virtual void    AddSequence(Object^ add) = IDataParser<String^, UInt24>::AddSequence;
+		virtual Object^ GetSequence(int at) = IDataParser<String^, UInt24>::GetSequence;
+		virtual Object^ GetSequence(void) = IDataParser<String^, UInt24>::GetSequence;
+
+		virtual int     FoundAt(int currentFrame);
+		virtual bool    Parse(UInt24 next);
+		virtual UInt24  Check(UInt24 next);
+		virtual int     Next(void);
 	};
 
 } //end of Yps

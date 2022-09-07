@@ -29,7 +29,7 @@ namespace Yps
 	ref class CryptKey;
 	ref class Crypt;
 
-	void ReleaseKey( CryptKey^ key );
+	delegate void CryptBufferReleaseHandler( IntPtr data );
 
 	public ref class CryptBuffer
 		: IDisposable
@@ -42,7 +42,8 @@ namespace Yps
 		Type^    type;
 		Object^  orig;
 		IntPtr   data;
-		
+		CryptBufferReleaseHandler^ dtor;
+
 	internal:
 
 		interior_ptr<Byte>       AsBytes( void );
@@ -109,10 +110,10 @@ namespace Yps
 				stopt = instance->GetElements() - start;
 				position = -1;
 			}
-
+			
 		public:
 			virtual ~CrypticEnumerator() {
-				ReleaseKey( key );
+				key->Release();
 				if (current == IntPtr::Zero) return;
 				current = IntPtr::Zero;
 				position = -1;
@@ -120,8 +121,8 @@ namespace Yps
 				start = 0;
 			}
 			virtual void Reset( void ) override {
+				key->RemoveContext();
 				position = -1;
-				ReleaseKey( key );
 			}
 			CryptBuffer^ GetHeader() {
 				return key->currentHdr();
@@ -134,7 +135,7 @@ namespace Yps
 			Bytes1Enumerator( CryptBuffer^ init, int oset )
 			: Enumerator<Byte>( init, oset ) {
 				current = IntPtr((Byte*)current.ToPointer() + oset);
-				init->SetDataType( Byte::typeid );
+				init->Type = Byte::typeid;
 			}
 
 		public:
@@ -154,7 +155,7 @@ namespace Yps
 			UInt24Enumerator(CryptBuffer^ init,int oset)
 			: Enumerator<UInt24>( init, oset ) {
 				current = IntPtr((UInt24*)current.ToPointer() + oset);
-				init->SetDataType( UInt24::typeid );
+				init->Type = UInt24::typeid;
 			}
 
 		public:
@@ -174,7 +175,7 @@ namespace Yps
 			Base64Enumerator(CryptBuffer^ init, int oset)
 			: Enumerator<CryptFrame>(init, oset) {
 				current = IntPtr((CryptFrame*)current.ToPointer() + oset);
-				init->SetDataType(CryptFrame::typeid);
+				init->Type = CryptFrame::typeid;
 			}
 
 		public:
@@ -264,11 +265,13 @@ namespace Yps
 		CryptBuffer( Array^ data_array );
 		CryptBuffer( IntPtr data_pntr, int data_size );
 		CryptBuffer( Type^ data_type, int array_length );
+		CryptBuffer( IntPtr data_pntr, int data_size, CryptBufferReleaseHandler^ destruct );
 		~CryptBuffer();
 
 		generic<class T> where T: ValueType
 		void SetData( array<T>^ newBuffer );
 		void SetData( IntPtr ptData, int cbData );
+		void SetDtor( CryptBufferReleaseHandler^ dtor );
 
 		Object^   GetData(void);
 		generic<class T> where T : ValueType
@@ -295,36 +298,50 @@ namespace Yps
 			return data;
 		}
 
+		property int Index {
+			int get( void );
+			void set( int value );
+		}
+
+		property Type^ Type {
+			System::Type^ get(void);
+			void set(System::Type^ value);
+		}
+
+		System::String^ ToString( System::Text::Encoding^ encode ) {
+			int len = GetDataSize();
+			pin_ptr<byte> ptb = AsBytes();
+			len = Math::Min( len, Index );
+			return encode->GetString( (byte*)ptb, len );
+		}
 		virtual String^ ToString() override;
 
-		void SetDataType( Type^ set_type );
-
-		Int64    ByteIndex;
-		property Byte default[ Int64 ] {
-			Byte get(Int64 idx) {
+		UInt64    ByteIndex;
+		property Byte default[ UInt64 ] {
+			Byte get( UInt64 idx ) {
 				return *(AsBytes() + idx);
 			}
-			void set(Int64 idx, Byte value) {
+			void set( UInt64 idx, Byte value ) {
 				*(AsBytes() + idx) = value;
 			}
 		}
 
-		Int32    DataIndex;
-		property UInt24 default[ Int32 ] {
-			UInt24 get(Int32 idx) {
+		UInt32   DataIndex;
+		property UInt24 default[ UInt32 ] {
+			UInt24 get( UInt32 idx ) {
 				return *(AsBinary() + idx);
 			}
-			void set(Int32 idx, UInt24 value) {
+			void set( UInt32 idx, UInt24 value ) {
 				*(AsBinary() + idx) = value;
 			}
 		}
 
-		Int16    FrameIndex;
-		property CryptFrame default[ Int16 ] {
-			CryptFrame get(Int16 idx) {
+		UInt16   FrameIndex;
+		property CryptFrame default[ UInt16 ] {
+			CryptFrame get( UInt16 idx ) {
 				return *(AsFrames() + idx);
 			}
-			void set(Int16 idx, CryptFrame value) {
+			void set( UInt16 idx, CryptFrame value ) {
 				*(AsFrames() + idx) = value;
 			}
 		}

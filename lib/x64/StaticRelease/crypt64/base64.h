@@ -149,12 +149,16 @@ extern "C" {
     BASE64_API B64Nuller   base64_Nuller(void);
 
     BASE64_API const char* base64_changeTable(const char* changeTo);
-    // get the regular, base64 standard coding table 
+
+    // get the regular, standard base64 coding table 
     BASE64_API const char* base64_b64Table(void);
+
     // get actually loaded coding table in use 
     BASE64_API const char* base64_getTable(void);
+
     // set a base64 table to be used for following operation (table won't be stored persistent)
     BASE64_API const char* base64_setTable(const char* tableOrFile);
+
     // set table data to be used for all following operations (will push the new table persistent)
     BASE64_API const char* base64_newTable(const char* TableData_Or_Tablefile_Or_NULL);
 

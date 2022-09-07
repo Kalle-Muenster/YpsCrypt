@@ -32,43 +32,48 @@ Yps::CryptFrame::CryptFrame( interior_ptr<unsigned char> init, int offset, int l
 interior_ptr<Byte>
 Yps::CryptBuffer::AsBytes( void )
 {
-	count = GetDataSize();
-	size = 1;
-	type = Byte::typeid;
-	return (Byte*)data.ToPointer();
+	if( size != 1 ) {
+		count = GetDataSize();
+		size = 1;
+	} return (Byte*)data.ToPointer();
 }
 
 interior_ptr<UInt24>
 Yps::CryptBuffer::AsBinary( void )
 {
-	count = GetDataSize() / 3;
-	size = 3;
-	type = UInt24::typeid;
-	return (UInt24*)data.ToPointer();
+	if( size != 3 ) {
+		count = GetDataSize() / 3;
+		size = 3;
+	} return (UInt24*)data.ToPointer();
 }
 
 interior_ptr<Yps::CryptFrame>
-Yps::CryptBuffer::AsFrames(void)
+Yps::CryptBuffer::AsFrames( void )
 {
-	count = GetDataSize() / 4;
-	size = 4;
-	type = System::UInt32::typeid;
-	return (CryptFrame*)data.ToPointer();
+	if( size != 4 ) {
+		count = GetDataSize() / 4;
+		size = 4;
+	} return (CryptFrame*)data.ToPointer();
 }
 
 Yps::CryptBuffer::CryptBuffer( Array^ from )
 {
+	dtor = nullptr;
 	orig = from;
-	type = from->GetValue(0)->GetType();
-	data = Marshal::UnsafeAddrOfPinnedArrayElement( from, 0 );
-	size = Marshal::SizeOf( type );
-	count = from->Length;
 	free = false;
+	type = from->GetType()->GetElementType();
+	size = Marshal::SizeOf( type );
+	if (from->Length > 0) {
+		data = Marshal::UnsafeAddrOfPinnedArrayElement(from, 0);
+	} else {
+		data = IntPtr::Zero;
+	} count = from->Length;
 }
 
 Yps::CryptBuffer::CryptBuffer( void )
 {
-	type = Byte::typeid;
+	dtor = nullptr;
+	type = IntPtr::typeid;
 	data = IntPtr::Zero;
 	free = false;
 	count = 0;
@@ -78,7 +83,8 @@ Yps::CryptBuffer::CryptBuffer( void )
 
 Yps::CryptBuffer::CryptBuffer( int data_size )
 {
-	type = Byte::typeid;
+	dtor = nullptr;
+	type = IntPtr::typeid;
 	data = Marshal::AllocCoTaskMem( data_size );
 	free = true;
 	count = data_size;
@@ -88,7 +94,8 @@ Yps::CryptBuffer::CryptBuffer( int data_size )
 
 Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size )
 {
-	type = System::Byte::typeid;
+	dtor = nullptr;
+	type = IntPtr::typeid;
 	size = 1;
 	data = buffer;
 	count = data_size;
@@ -96,7 +103,18 @@ Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size )
 	orig = nullptr;
 }
 
-Yps::CryptBuffer::CryptBuffer( Type^ data_type, int array_size )
+Yps::CryptBuffer::CryptBuffer( IntPtr buffer, int data_size, CryptBufferReleaseHandler^ destructor )
+{
+	dtor = destructor;
+	type = IntPtr::typeid;
+	size = 1;
+	data = buffer;
+	count = data_size;
+	free = false;
+	orig = nullptr;
+}
+
+Yps::CryptBuffer::CryptBuffer( System::Type^ data_type, int array_size )
 {
 	orig = nullptr;
 	size = Marshal::SizeOf( data_type );
@@ -105,7 +123,7 @@ Yps::CryptBuffer::CryptBuffer( Type^ data_type, int array_size )
 	if (array_size % 3 > 0)
 		array_size += (3 - (array_size % 3));
 	data = Marshal::AllocCoTaskMem( array_size );
-	type = data_type;
+	type = IntPtr::typeid;
 	free = true;
 }
 
@@ -113,27 +131,46 @@ Yps::CryptBuffer::~CryptBuffer( void )
 {
 	if( free && data != IntPtr::Zero )
 		Marshal::FreeCoTaskMem( data );
+	else if ( dtor != nullptr ) {
+		dtor( data );
+	}
 	data = IntPtr::Zero;
+	dtor = nullptr;
 	orig = nullptr;
 	free = false;
 }
 
 void
-Yps::CryptBuffer::SetDataType( Type^ set_type )
+Yps::CryptBuffer::Type::set( System::Type^ set_type )
 {
 	int data_size = GetDataSize();
 	size = Marshal::SizeOf( set_type );
 	count = data_size / size;
 }
 
+System::Type^
+Yps::CryptBuffer::Type::get( void )
+{
+	if( type == IntPtr::typeid ) {
+		switch (size) {
+		case 1: return Byte::typeid;
+		case 3: return UInt24::typeid;
+		case 4: return UInt32::typeid;
+		} return nullptr;
+	} return type;
+}
+
 generic<class T> where T: ValueType void
 Yps::CryptBuffer::SetData( array<T>^ newBuffer )
 {
-	if( this->free ) {
-		if( this->data != IntPtr::Zero ) {
-			Marshal::FreeCoTaskMem( data );
-		} this->free = false;
-	} this->data = Marshal::UnsafeAddrOfPinnedArrayElement( newBuffer, 0 );
+	if( this->free && this->data != IntPtr::Zero ) {
+		Marshal::FreeCoTaskMem( data );
+	} else if ( this->dtor != nullptr ) {
+		this->dtor( data );
+	}
+	this->free = false;
+	this->dtor = nullptr;
+	this->data = Marshal::UnsafeAddrOfPinnedArrayElement( newBuffer, 0 );
 	this->size = Marshal::SizeOf( this->type = T::typeid );
 	this->count = newBuffer->Length;
 	this->orig = newBuffer;
@@ -142,11 +179,14 @@ Yps::CryptBuffer::SetData( array<T>^ newBuffer )
 void
 Yps::CryptBuffer::SetData( IntPtr ptData, int cbData )
 {
-	if( this->free ) {
-		if (this->data != IntPtr::Zero) {
-			Marshal::FreeCoTaskMem( data );
-		} this->free = false;
-	} this->data = ptData;
+	if( this->free && this->data != IntPtr::Zero ) {
+		Marshal::FreeCoTaskMem( data );
+	} else if ( this->dtor != nullptr ) {
+		this->dtor( data );
+	}
+	this->dtor = nullptr;
+	this->free = false;
+	this->data = ptData;
 	this->count = cbData;
 	this->orig = nullptr;
 	this->size = 1;
@@ -163,10 +203,9 @@ Yps::CryptBuffer::GetData( void )
 generic<class T> where T : ValueType array<T>^
 Yps::CryptBuffer::GetCopy( void )
 {
-	int bytesize = GetDataSize();
-	int typesize = sizeof(T);
-	int loopsize = bytesize / typesize;
-	loopsize += (bytesize % typesize > 0 ? 1 : 0);
+	const int bytesize = GetDataSize();
+	const int typesize = sizeof(T);
+	const int loopsize = (bytesize / typesize) + (bytesize % typesize > 0 ? 1 : 0);
 	void* d = data.ToPointer();
 	switch (typesize) {
 	case 1: { array<byte>^ copy = gcnew array<byte>(loopsize);
@@ -219,23 +258,17 @@ Yps::CryptBuffer::Enumerator<T>^ Yps::CryptBuffer::GetEnumerator( int offsetTs )
 	}
 }
 
-System::String^ 
+
+System::String^
 Yps::CryptBuffer::ToString( void )
 {
-	int len = GetDataSize();
-	System::Text::StringBuilder^ builder = gcnew System::Text::StringBuilder(len,len);
-	interior_ptr<Byte> ptb = AsBytes();
-	while(ptb[--len] == 0 && len > 0);
-	++len;
-	for(int i = 0; i < len; ++i, ++ptb)
-		builder->Append( (wchar_t)*ptb );
-	return builder->ToString();
+	return this->ToString( Encoding::Default );
 }
 
 void
-Yps::ReleaseKey( Yps::CryptKey^ key )
+Yps::CryptBuffer::SetDtor( Yps::CryptBufferReleaseHandler^ destructor )
 {
-	Yps::Crypt::ReleaseKey( key );
+	dtor = destructor;
 }
 
 
@@ -269,6 +302,48 @@ Yps::CryptBuffer::GetCrypticEnumerator( CryptKey^ use, CrypsFlags mode, int offs
 }
 
 
+int
+Yps::CryptBuffer::Index::get( void )
+{
+	switch (size) {
+		case 1: { DataIndex = ByteIndex / 3; FrameIndex = ByteIndex / 4; } return ByteIndex;
+		case 3: { ByteIndex = DataIndex * 3; FrameIndex = ByteIndex / 4; } return DataIndex;
+		case 4: { ByteIndex = FrameIndex * 4; DataIndex = ByteIndex / 3; } return FrameIndex;
+	} return -1;
+}
+
+void
+Yps::CryptBuffer::Index::set( int value )
+{
+	switch (size) {
+		case 1: { ByteIndex = value; DataIndex = ByteIndex / 3; FrameIndex = ByteIndex / 4; } break;
+		case 3: { DataIndex = value; ByteIndex = DataIndex * 3; FrameIndex = ByteIndex / 4; } break;
+		case 4: { FrameIndex = value; ByteIndex = FrameIndex * 4; DataIndex = ByteIndex / 3; } break;
+	}
+}
+
+Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ key, int oset )
+	: CrypticEnumerator<UInt32,UInt24>(init, key, oset)
+{
+	bool header = false;
+	if ( header = Crypt::BeginDeString( key, key->currentHdr() ) ) {
+		CryptBuffer^ hdrdata = gcnew CryptBuffer( key->currentHdr()->GetCopy<UInt32>() );
+		if( key->Release() ) {
+		    if(!Crypt::BeginDeString( key, init ) ) {
+			    key->RemoveContext();
+			    Crypt::BeginDeString( key, hdrdata );
+			    header = false;
+			}
+		}
+	} else if ( !( header = Crypt::BeginDeString( key, init ) ) ) {
+		key->RemoveContext();
+	} if( header ) {
+		start += 4;
+		stopt -= 4;
+	} current += (start * 4);
+	init->Type = UInt32::typeid;
+}
+
 // -- inner cryptic string enumerator -- //
 
 Yps::CryptBuffer::InnerCrypticStringEnumerator::InnerCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
@@ -276,7 +351,7 @@ Yps::CryptBuffer::InnerCrypticStringEnumerator::InnerCrypticStringEnumerator( Cr
 {
 	current += (start * 3);
 	Crypt::CreateHeader( use, CrypsFlags::Base64 );
-	init->SetDataType( UInt24::typeid );
+	init->Type = UInt24::typeid;
 }
 
 Yps::CryptBuffer::InnerCrypticStringEnumerator^
@@ -327,7 +402,7 @@ Yps::CryptBuffer::InnerCrypticEnumerator::InnerCrypticEnumerator( CryptBuffer^ i
 {
 	current += (start * 3);
 	Crypt::CreateHeader( use, CrypsFlags::Binary );
-	init->SetDataType( UInt24::typeid );
+	init->Type = UInt24::typeid;
 }
 
 Yps::CryptBuffer::InnerCrypticEnumerator^
@@ -371,7 +446,7 @@ Yps::CryptBuffer::OuterCrypticEnumerator::Current::get( void )
 }
 
 void
-Yps::CryptBuffer::OuterCrypticEnumerator::Current::set(UInt24 value)
+Yps::CryptBuffer::OuterCrypticEnumerator::Current::set( UInt24 value )
 {
 	*((UInt24*)current.ToPointer() + position) = Crypt::EncryptFrame24( key, value );
 }

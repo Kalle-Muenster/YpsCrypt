@@ -6,4 +6,6 @@
 #include <base64.h>
 #include <crypt64.h>
 
+#define HEADER_ERROR 7496808u
+
 #endif
