@@ -29,7 +29,7 @@ namespace Yps
 	ref class CryptKey;
 	ref class Crypt;
 
-	delegate void CryptBufferReleaseHandler( IntPtr data );
+	public delegate void CryptBufferReleaseHandler( IntPtr data );
 
 	public ref class CryptBuffer
 		: IDisposable

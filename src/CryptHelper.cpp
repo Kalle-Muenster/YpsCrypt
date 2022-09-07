@@ -143,7 +143,7 @@ Yps::Base64::EncodeW( array<T>^ data )
 generic<class T> ArraySegment<T>
 Yps::Base64::DecodeW( String^ data )
 {
-    if ( fail() ) return ArraySegment<T>::Empty;
+    if ( fail() ) return ArraySegment<T>();
     array<byte>^ inp_dat = Encoding::Default->GetBytes( data );
     const uint sizeofT = sizeof(T);
     const uint inp_len = inp_dat->Length;
@@ -155,28 +155,28 @@ Yps::Base64::DecodeW( String^ data )
     byte* dst_ptr = (byte*)dst_pin;
     char* src_ptr = (char*)src_pin;
     uint out_len = base64_decodeData( dst_ptr, src_ptr, inp_len );
-    if ( check(out_len) ) return ArraySegment<T>::Empty;
+    if ( check(out_len) ) return ArraySegment<T>();
     return ArraySegment<T>( out_dat, 0, (out_len/sizeofT) );
 }
 
 generic<class T> ArraySegment<byte>
 Yps::Base64::EncodeA( array<T>^ data )
 {
-    if (fail()) return ArraySegment<byte>::Empty;
+    if (fail()) return ArraySegment<byte>();
     const uint inp_len = data->Length * sizeof(T);
     const uint enc_len = BASE64_ENCODED_SIZE( inp_len );
     array<byte>^ out_dat = gcnew array<byte>( enc_len + 1 );
     pin_ptr<byte> dst_ptr( &out_dat[0] );
     pin_ptr<T> src_ptr( &data[0] );
     uint out_len = base64_encodeData( (char*)dst_ptr, (byte*)src_ptr, inp_len, 0 );
-    if (check(out_len)) return ArraySegment<byte>::Empty;
+    if (check(out_len)) return ArraySegment<byte>();
     return ArraySegment<byte>( out_dat, 0, out_len );
 }
 
 generic<class T> ArraySegment<T>
 Yps::Base64::DecodeA( array<byte>^ data )
 {
-    if (fail()) return ArraySegment<T>::Empty;
+    if (fail()) return ArraySegment<T>();
     const uint sizeofT = sizeof(T);
     const uint inp_len = data->Length;
     const uint dec_len = BASE64_DECODED_SIZE(inp_len);
@@ -186,7 +186,7 @@ Yps::Base64::DecodeA( array<byte>^ data )
     byte* dst_ptr = (byte*)dst_pin;
     pin_ptr<byte> src_ptr(&data[0]);
     uint out_len = base64_decodeData( dst_ptr, (char*)src_ptr, inp_len );
-    if (check(out_len)) return ArraySegment<T>::Empty;
+    if (check(out_len)) return ArraySegment<T>();
     return ArraySegment<T>( out_dat, 0, (out_len/sizeofT) );
 }
 
@@ -250,7 +250,7 @@ Yps::Base64::EncodeString( String^ data )
 System::String^
 Yps::Base64::DecodeString( String^ data )
 {
-    return Encoding::Default->GetString( DecodeW<byte>( data ) );    
+    return DecodeW<byte>( data ).ToString();
 }
 
 
@@ -418,8 +418,8 @@ Yps::Crypt::CreateKey( ulong hash )
 
 Yps::DataSearch24::DataSearch24(void)
 {
-    Action<int>^ action = gcnew Action<int>(this, &DataSearch24::sequenceChanged);
-    search = gcnew SearchSequences<array<byte>^>(action, Array::Empty<byte>());
+    Action<int>^ action = gcnew Action<int>( this, &DataSearch24::sequenceChanged );
+    search = gcnew SearchSequences<array<byte>^>( action, Array::Empty<byte>() );
     bucket = gcnew List<array<byte>^>(1);
     founds = gcnew List<int>(1);
 }

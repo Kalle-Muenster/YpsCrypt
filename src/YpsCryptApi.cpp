@@ -133,7 +133,7 @@ Yps::Crypt::EncryptW( CryptKey^ key, array<T>^ Src )
 generic<class T> ArraySegment<byte>
 Yps::Crypt::EncryptA( CryptKey^ key, array<T>^ Src )
 {
-    if (fail()) return ArraySegment<byte>::Empty;
+    if (fail()) return ArraySegment<byte>();
     const uint size_inp = Src->Length * sizeof(T);
     uint size_enc = CRYPT64_ENCRYPTED_SIZE( size_inp );
     array<byte>^ Dst = gcnew array<byte>( size_enc + 1 );
@@ -145,7 +145,7 @@ Yps::Crypt::EncryptA( CryptKey^ key, array<T>^ Src )
         (byte*)src, size_inp, dst
     );
     if ( check(size_out) ) {
-        return ArraySegment<byte>::Empty;
+        return ArraySegment<byte>();
     } while ( size_out <= size_enc-- ) {
         *(dst++ + size_out) = 0;
     } return ArraySegment<byte>( Dst, 0, size_out );
@@ -154,15 +154,15 @@ Yps::Crypt::EncryptA( CryptKey^ key, array<T>^ Src )
 generic<class T> ArraySegment<T>
 Yps::Crypt::DecryptW( CryptKey^ key, String^ cryptisch )
 {
-    if ( fail() ) return ArraySegment<T>::Empty;
+    if ( fail() ) return ArraySegment<T>();
     const int size_elm = sizeof(T);
     array<byte>^ Src = Encoding::Default->GetBytes( cryptisch );
     const int size_src = Src->Length;
 
     if( size_src < 16 ) {
-        setError( "header", *(unsigned*)"hdr" );
+        setError( "header", HEADER_ERROR );
         check( 0 );
-        return ArraySegment<T>::Empty;
+        return ArraySegment<T>();
     }
 
     int size_dec = CRYPT64_DECRYPTED_SIZE( size_src );
@@ -177,7 +177,7 @@ Yps::Crypt::DecryptW( CryptKey^ key, String^ cryptisch )
         (K64*)key->ToPointer(),
         src, Src->Length, dst );
     if( check( size_out ) ) {
-        return ArraySegment<T>::Empty;
+        return ArraySegment<T>();
     } while ( size_out < size_dec-- )
         *(dst++ + size_out) = 0;
     return ArraySegment<T>( Dst, 0, size_out/size_elm );
@@ -186,17 +186,17 @@ Yps::Crypt::DecryptW( CryptKey^ key, String^ cryptisch )
 generic<class T> ArraySegment<T>
 Yps::Crypt::DecryptA( CryptKey^ key, array<byte>^ Src )
 {
-    if ( fail() ) return ArraySegment<T>::Empty;
+    if ( fail() ) return ArraySegment<T>();
     const int size_elm = sizeof(T);
     const int size_enc = Src->Length;
 
     if (size_enc < 16) {
-        setError( "header", *(unsigned*)"hdr" );
+        setError( "header", HEADER_ERROR );
         check(0);
-        return ArraySegment<T>::Empty;
+        return ArraySegment<T>();
     }
 
-    uint size_dec = CRYPT64_DECRYPTED_SIZE(size_enc);
+    uint size_dec = CRYPT64_DECRYPTED_SIZE( size_enc );
     uint prox_dec = (size_dec + (size_elm - (size_dec % size_elm)));
     array<T>^ Dst = gcnew array<T>(prox_dec / size_elm);
 
@@ -210,7 +210,7 @@ Yps::Crypt::DecryptA( CryptKey^ key, array<byte>^ Src )
         src, Src->Length, dst );
 
     if( check(size_dec) ) {
-        return ArraySegment<T>::Empty;
+        return ArraySegment<T>();
     } while( size_dec < prox_dec-- )
         *(dst++ + size_dec) = 0;
     return ArraySegment<T>( Dst, 0, size_dec/size_elm );
@@ -219,7 +219,7 @@ Yps::Crypt::DecryptA( CryptKey^ key, array<byte>^ Src )
 generic<class T> ArraySegment<T>
 Yps::Crypt::BinaryEncrypt( CryptKey^ key, array<T>^ Src )
 {
-    if( fail() ) return ArraySegment<T>::Empty;
+    if( fail() ) return ArraySegment<T>();
     const int size_src = Src->Length * sizeof(T);
     array<T>^ Dst = gcnew array<T>( (size_src + 12) / sizeof(T) );
     pin_ptr<T> dst( &Dst[0] );
@@ -228,21 +228,20 @@ Yps::Crypt::BinaryEncrypt( CryptKey^ key, array<T>^ Src )
         static_cast<K64*>(key->ToPointer()),
         reinterpret_cast<const byte*>(src),
         size_src, reinterpret_cast<byte*>(dst) );
-    return check( size )
-         ? ArraySegment<T>::Empty
-         : ArraySegment<T>( Dst, 0, size/sizeof(T) );
+    return check( size ) ? ArraySegment<T>()
+                         : ArraySegment<T>( Dst, 0, size/sizeof(T) );
 }
 
 generic<class T> ArraySegment<T>
 Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
 {
-    if( fail() ) return ArraySegment<T>::Empty;
+    if( fail() ) return ArraySegment<T>();
     const int size_ofT = sizeof(T);
     const int size_src = Src->Length * size_ofT;
     if (size_src < 12) {
         setError( "header", HEADER_ERROR );
         check(0);
-        return ArraySegment<T>::Empty;
+        return ArraySegment<T>();
     }
     int size_dst = size_src - 12;
     const int rest_dst = size_dst % size_ofT;
@@ -256,7 +255,7 @@ Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
         reinterpret_cast<const byte*>( src ),
         size_src, dst );
     if ( check( size_dst ) ) {
-        return ArraySegment<T>::Empty;
+        return ArraySegment<T>();
     } while (null_dst) {
         *(dst++ + size_dst) = 0;
         --null_dst;
