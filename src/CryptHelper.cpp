@@ -209,10 +209,7 @@ Yps::Base64::Encode( CryptBuffer^ buffer, int size )
 Yps::CryptBuffer^
 Yps::Base64::Encode( CryptBuffer^ data )
 {
-    int size = data->Index;
-    if ( size > 0 ) size = Math::Min( size, data->GetDataSize() );
-    else size = data->GetDataSize();
-    return Encode( data, size );
+    return Encode( data, data->Length );
 }
 
 Yps::CryptBuffer^
@@ -229,10 +226,7 @@ Yps::Base64::Decode( CryptBuffer^ data, int size )
 Yps::CryptBuffer^
 Yps::Base64::Decode( CryptBuffer^ data )
 {
-    int size = data->Index;
-    if (size > 0) size = Math::Min( size, data->GetDataSize() );
-    else size = data->GetDataSize();
-    return Decode( data, size );
+    return Decode( data, data->Length );
 }
 
 System::UInt32
