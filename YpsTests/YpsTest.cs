@@ -244,11 +244,10 @@ namespace Yps
 
         protected void mistakingFormat()
         {
-            // try binary decryption of base64 encoded cryptic data input:
-            byte[] result = Crypt.BinaryDecrypt( keypassa, Encoding.Default.GetBytes(b64crypt) ).ToArray();
-
-            // and ensure no output data is returned but error message is generated instead:
-            CheckStep( result.Length == 0, "calling Yps.Crypt.BinaryDecrypt() returned {0}", Crypt.Error.ToString() );
+            // try binary decryption of base64 encoded cryptic data input and ensure 
+            // no output data is returned but error message is generated instead:
+            CheckStep( Crypt.BinaryDecrypt( keypassa, Encoding.Default.GetBytes(b64crypt) ).Count == 0,
+                "calling Yps.Crypt.BinaryDecrypt() returned {0}", Crypt.Error.ToString() );
         }
 
         protected void cryptingErrors()
@@ -292,27 +291,34 @@ namespace Yps
         private void encryptingBinar()
         {
             // try binary encrypting a data sample from the test data set 
-            bincrypt = Crypt.BinaryEncrypt( keypassa, bytesbin ).ToArray();
+            ArraySegment<byte> result = Crypt.BinaryEncrypt( keypassa, bytesbin );
 
             // ensure no errors are caused
-            CheckStep( bincrypt.Length > 0, "calling Yps.Crypt.BinaryEncrypt() returned {0} bytes", bincrypt.Length );
+            CheckStep( result.Count > 0, "calling Yps.Crypt.BinaryEncrypt() returned {0} bytes", result.Count );
 
             // ensure generated output of expected size
-            MatchStep( bincrypt.Length , bytesbin.Length + 12, "data size", "byte" );
+            MatchStep( result.Count, bytesbin.Length + 12, "data size", "byte" );
+
+            bincrypt = new byte[result.Count]; 
+            for(int i=0; i < bincrypt.Length; ++i ) {
+                bincrypt[i] = result.Array[result.Offset+i];
+            } 
         }
 
         private void decryptingBinar()
         {
+            string result = null;
             // try binary decrypting a string that previously had been encrypted binary
-            binbacks = Crypt.BinaryDecrypt( keypassa, bincrypt ).ToArray();
-            string result = "";
-
+            ArraySegment<byte> segment = Crypt.BinaryDecrypt( keypassa, bincrypt );
+            unsafe { fixed ( byte* saege = &segment.Array[segment.Offset] ) {
+                     result = Encoding.Default.GetString( saege, segment.Count );
+                }
+            }
             // ensure operation was successive and no errors are caused
-            if( binbacks == null ) {
+            if( result == null ) {
                 FailStep( "calling Yps.Crypt.BinaryDecrypt() returned: {0}", Crypt.Error );
             } else {
-                PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", binbacks.Length );
-                result = Encoding.Default.GetString( binbacks ).Trim();
+                PassStep( "calling Yps.Crypt.BinaryDecrypt() returned {0} bytes", result.Length );
             } 
             // ensure resulting output returned is data of expected length
             MatchStep( result, testdata, "decrypted data", "text" );
