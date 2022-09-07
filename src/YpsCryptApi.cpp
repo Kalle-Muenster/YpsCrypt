@@ -164,7 +164,6 @@ Yps::Crypt::DecryptW( CryptKey^ key, String^ cryptisch )
         check( 0 );
         return ArraySegment<T>();
     }
-
     int size_dec = CRYPT64_DECRYPTED_SIZE( size_src );
     array<T>^ Dst = gcnew array<T>( (size_dec+size_elm) / size_elm );
     size_dec = Dst->Length * size_elm;

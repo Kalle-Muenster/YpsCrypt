@@ -185,7 +185,7 @@ namespace Yps
             CryptBuffer b64buffer = new CryptBuffer( ( ( testdata.Length * 4 ) / 3 ) + 4 );
             b64buffer.Index = 0;
             while( b64buffer.Index < testdata.Length ) {
-                b64buffer[b64buffer.ByteIndex] = (byte)testdata[b64buffer.ByteIndex];
+                b64buffer[b64buffer.ByteIndex] = (byte)testdata[(int)b64buffer.ByteIndex];
                 ++b64buffer.ByteIndex; 
             }
                 
@@ -354,7 +354,7 @@ namespace Yps
 
             // apply decryption on the testcase befores output buffer which contains cryptic data 
             int size = Crypt.Decrypt24( keypassa, hdr, dat );
-            keypassa.DropContext();
+            keypassa.Release();
             UInt24 differentNach = dat[probingPosition];
             
             if( differentVor != differentNach )
