@@ -322,6 +322,23 @@ Yps::CryptBuffer::Index::set( int value )
 	}
 }
 
+slong
+Yps::CryptBuffer::Length::get(void)
+{
+	return Index > 0
+		 ? Math::Min((int)ByteIndex,GetDataSize())
+		 : GetDataSize();
+}
+
+void
+Yps::CryptBuffer::Length::set( slong val )
+{
+	System::Type^ t = Type;
+	Type = Byte::typeid;
+	Index = val;
+	Type = t;
+}
+
 Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ key, int oset )
 	: CrypticEnumerator<UInt32,UInt24>(init, key, oset)
 {

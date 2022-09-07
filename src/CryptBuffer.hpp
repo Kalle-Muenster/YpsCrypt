@@ -36,12 +36,12 @@ namespace Yps
 	{
 	protected:
 
-		bool     free;
-		unsigned size;
-		unsigned count;
-		Type^    type;
-		Object^  orig;
-		IntPtr   data;
+		bool                       free;
+		unsigned                   size;
+		unsigned                   count;
+		IntPtr                     data;
+		Type^                      type;
+		Object^                    orig;
 		CryptBufferReleaseHandler^ dtor;
 
 	internal:
@@ -308,6 +308,11 @@ namespace Yps
 			void set(System::Type^ value);
 		}
 
+		property Int64 Length {
+			Int64 get(void);
+			void set(Int64 val);
+		}
+
 		System::String^ ToString( System::Text::Encoding^ encode ) {
 			int len = GetDataSize();
 			pin_ptr<byte> ptb = AsBytes();
@@ -316,7 +321,7 @@ namespace Yps
 		}
 		virtual String^ ToString() override;
 
-		UInt64    ByteIndex;
+		UInt64   ByteIndex;
 		property Byte default[ UInt64 ] {
 			Byte get( UInt64 idx ) {
 				return *(AsBytes() + idx);
@@ -349,9 +354,7 @@ namespace Yps
 		int GetDataSize() { return count * size; }
 		int GetElements() { return count; }
 		int GetTypeSize() { return size; }
-		property Int64 Length {
-			Int64 get(void) { return GetElements(); }
-		}
+
 	};
 } //end of Yps
 
