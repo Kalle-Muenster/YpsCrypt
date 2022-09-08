@@ -160,6 +160,7 @@ COMMANDLINER_API cmLn    parameterCopy(char* dst, cmLn src);
 COMMANDLINER_API uint    stringCompare(cmLn, cmLn);
 COMMANDLINER_API cmLn    unQuoted(cmLn);
 COMMANDLINER_API cmLn    toQuoted(cmLn);
+COMMANDLINER_API cmBl    isQuoted(cmLn);
 
 COMMANDLINER_API void*   getDingens(const char* named);
 COMMANDLINER_API void    addDingens(const char* named, void* dings, void(*bumms)(void));

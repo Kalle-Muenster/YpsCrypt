@@ -544,7 +544,7 @@ Yps::Crypt::Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata, bool withHeader 
     } else {
         error = Yps::Error( getErrorCode(), getError() );
         return -1;
-    } return len; //return length of array
+    } return len;
 }
 
 int
@@ -626,9 +626,3 @@ Yps::Crypt::DecryptFile( CryptKey^ key, System::IO::FileInfo^ file )
         return -1;
     }
 }
-
-
-
-//------------------------------------------------------------------------------------//
-
-

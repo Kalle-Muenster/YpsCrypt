@@ -182,9 +182,9 @@ Yps::Base64::DecodeA( array<byte>^ data )
     const uint dec_len = BASE64_DECODED_SIZE(inp_len);
     array<T>^ out_dat = gcnew array<T>((dec_len / sizeofT) + 1);
     const uint dat_len = ((dec_len / sizeofT) + 1) * sizeofT;
-    pin_ptr<T> dst_pin(&out_dat[0]);
+    pin_ptr<T> dst_pin( &out_dat[0] );
     byte* dst_ptr = (byte*)dst_pin;
-    pin_ptr<byte> src_ptr(&data[0]);
+    pin_ptr<byte> src_ptr( &data[0] );
     uint out_len = base64_decodeData( dst_ptr, (char*)src_ptr, inp_len );
     if (check(out_len)) return ArraySegment<T>();
     return ArraySegment<T>( out_dat, 0, (out_len/sizeofT) );
@@ -195,10 +195,7 @@ Yps::Base64::Encode( CryptBuffer^ buffer, int size )
 {
     Type^ inp_typ = buffer->Type;
     const uint need_size = BASE64_ENCODED_SIZE(size);
-    CryptBuffer^ output = buffer;
-    if ( buffer->GetDataSize() < need_size ) {
-        output = gcnew CryptBuffer( inp_typ, (need_size/Marshal::SizeOf(inp_typ))+1 );
-    } 
+    CryptBuffer^ output = gcnew CryptBuffer(inp_typ, (need_size / Marshal::SizeOf(inp_typ)) + 1);
     pin_ptr<byte> src( buffer->AsBytes() );
     pin_ptr<byte> dst( output->AsBytes() );
     output->Index = base64_encodeData( (char*)dst, src, size, 0 );
@@ -230,13 +227,13 @@ Yps::Base64::Decode( CryptBuffer^ data )
 }
 
 System::UInt32
-Yps::Base64::EncodeFrame(UInt24 frame)
+Yps::Base64::EncodeFrame( UInt24 frame )
 {
     return base64_encodeFrame( reinterpret_cast<b64Frame&>(frame) ).u32;
 }
 
 Stepflow::UInt24
-Yps::Base64::DecodeFrame(UInt32 frame)
+Yps::Base64::DecodeFrame( UInt32 frame )
 {
     return base64_decodeFrame( reinterpret_cast<b64Frame&>(frame) ).u32;
 }
@@ -250,7 +247,8 @@ Yps::Base64::EncodeString( String^ data )
 System::String^
 Yps::Base64::DecodeString( String^ data )
 {
-    return DecodeW<byte>( data ).ToString();
+    ArraySegment<byte> dec = DecodeW<byte>( data );
+    return Encoding::Default->GetString( dec.Array, 0, dec.Count );
 }
 
 

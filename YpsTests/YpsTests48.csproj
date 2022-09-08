@@ -45,7 +45,7 @@
     <LangVersion>6</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>..\bin\dot48\x86\Release\</OutputPath>
+    <OutputPath>..\bin\dot48\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -89,8 +89,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Consola.Test">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>$(ConsolaBinRoot)\$(PlatformTarget)\$(Configuration)\Consola.Test.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="Int24Types">
       <HintPath>$(Int24TypesBinRoot)\$(PlatformTarget)\$(Configuration)\Int24Types.dll</HintPath>

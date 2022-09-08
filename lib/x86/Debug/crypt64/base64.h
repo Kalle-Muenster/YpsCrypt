@@ -111,10 +111,10 @@ extern "C" {
     BASE64_API b64Frame    base64_encodeFrame(b64Frame threeByte); //returns 4 chars b64 data
     BASE64_API b64Frame    base64_decodeFrame(b64Frame fourChars); //returns 3 bytes bin data + 0 or +!=0 on decoding errors (4th byte then points actual bad input byte)
     BASE64_API b64Frame    base64_encEndFrame(b64Frame threeByteWithFourthLengthByte);
-    BASE64_API int         base64_encodeData( char* dst, const byte* src, unsigned cbSrc, int lbOff ); //encode binary data of cbSrc length
-    BASE64_API int         base64_decodeData( byte* dst, const char* src, unsigned cbSrc ); //decode base64 data (at best terminated by equal sign)
+    BASE64_API int         base64_encodeData( char* dst, const byte* src, uint cbSrc, uint lbOff ); //encode binary data of cbSrc length
+    BASE64_API int         base64_decodeData( byte* dst, const char* src, uint cbSrc ); //decode base64 data (at best terminated by equal sign)
 
-    BASE64_API const char* base64_encode(const byte* data, uint size);
+    BASE64_API const char* base64_encode(const byte* data, uint* size);
     BASE64_API const byte* base64_decode(const char* encd, uint* size);
 
     // encode content of file dst to file src

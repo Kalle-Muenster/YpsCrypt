@@ -112,7 +112,7 @@ Yps::FileStream::Write( array<byte>^ buffer, int offset, int count )
         }
     }
     pin_ptr<byte> src( &buffer[offset] );
-    crypt64_swrite( (byte*)src, 3u, uint(count/3), (K64F*)file.ToPointer() );
+    crypt64_swrite( (byte*)src, 3u, (uint)(count/3u), (K64F*)file.ToPointer() );
     catchError( "invalid base64 data" );
     if( wasError() ) { Crypt::error = Error( (uint)getErrorCode(), getError() );
         throw gcnew Exception( Crypt::error.Text );

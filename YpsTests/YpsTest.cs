@@ -159,9 +159,14 @@ namespace Yps
 
         private void cryptingBuffer()
         {
-            dat = new CryptBuffer();
+            InfoStep("Creating a new CryptBuffer of {0} bytes length", 50);
+            dat = new CryptBuffer( 50 );
+            CheckStep( dat.Length >= 50, "Creating a CryptBuffer of matching length {0}", 50 );
+
+            InfoStep( "Exchange CryptBuffer data against an existing buffer array" );
             dat.SetData( bytesbin );
-            CheckStep( dat.Length >= bytesbin.Length, "Creating a CryptBuffer of matching length {0}", bytesbin.Length );
+            CheckStep( dat.Length >= bytesbin.Length, "CryptBuffer shows up matching length of {0} bytes", bytesbin.Length );
+
             ulong length = (ulong)bytesbin.Length;
             bool pass = false;
             for (dat.ByteIndex = 0; dat.ByteIndex < length; ++dat.ByteIndex)
@@ -171,7 +176,7 @@ namespace Yps
                     FailStep("copied data to buffer mismatch at position: {0}", dat.ByteIndex);
                     break;
                 }
-            } CheckStep( pass, "copied data to buffer MUST equal origin" );
+            } CheckStep( pass, "wrapped data in buffer equals (is same memory like) origin" );
         }
 
         private void base64encoding()
@@ -182,18 +187,11 @@ namespace Yps
             else
                 PassStep(string.Format("calling Yps.Base64.EncodeString() returned {0} charracters", b64data.Length ));
 
-            CryptBuffer b64buffer = new CryptBuffer( ( ( testdata.Length * 4 ) / 3 ) + 4 );
-            b64buffer.Index = 0;
-            while( b64buffer.Index < testdata.Length ) {
-                b64buffer[b64buffer.ByteIndex] = (byte)testdata[(int)b64buffer.ByteIndex];
-                ++b64buffer.ByteIndex; 
-            }
-                
-            b64data = Base64.Encode( b64buffer ).ToString( Encoding.UTF8 );
+            b64data = Base64.Encode( new CryptBuffer( bytesbin ) ).ToString( Encoding.Default );
             if( b64data == null )
                 FailStep(string.Format("calling Yps.Base64.Encode(buffer) returned {0}", Base64.Error));
             else
-                PassStep(string.Format("calling Yps.Base64.Encode(buffer) returned buffer at size {0} bytes ", b64buffer.ByteIndex ));
+                PassStep(string.Format("calling Yps.Base64.Encode(buffer) returned {0}", b64data ));
         }
 
         private void base64decoding()

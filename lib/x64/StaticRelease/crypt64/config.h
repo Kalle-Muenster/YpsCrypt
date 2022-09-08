@@ -10,7 +10,7 @@
 #define USE_CRYPT64 (1)
 #define USE_TOKKEN (0)
 
-#define SET_MAX_NAMELENGTH 512
+#define SET_MAX_NAMELENGTH 255
 #define SET_MAX_NUMBERARGS 8
 
 #endif
