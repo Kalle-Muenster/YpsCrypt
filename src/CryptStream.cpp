@@ -31,7 +31,7 @@ Yps::FileStream::crypticFopen( CryptKey^ key, String^ nam, uint mod )
 Yps::Stream::Stream( CryptKey^ pass, Flags mode )
     : System::IO::Stream() {
     frame = gcnew array<byte>(3);
-    flags = flags;
+    flags = mode;
     crypt = pass;
     bytes = 0;
  }
