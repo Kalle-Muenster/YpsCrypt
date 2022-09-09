@@ -130,13 +130,14 @@ Yps::Base64::EncodeW( array<T>^ data )
 {
     if (fail()) return nullptr;
     const uint inp_len = data->Length * sizeof(T);
-    const uint enc_len = BASE64_ENCODED_SIZE( inp_len );
+    uint enc_len = BASE64_ENCODED_SIZE( inp_len );
     array<char>^ out_dat = gcnew array<char>( enc_len+1 );
     pin_ptr<T> src_ptr( &data[0] );
     pin_ptr<char> dst_ptr( &out_dat[0] );
-    uint out_len = base64_encodeData( dst_ptr, (byte*)src_ptr, inp_len, 0);
-    if ( check(out_len) ) return nullptr;
-    String^ ret_dat = gcnew String( dst_ptr, 0, out_len );
+    enc_len = base64_encodeData( dst_ptr, (byte*)src_ptr, inp_len, 0);
+    if ( check(enc_len) ) return nullptr;
+    while ( dst_ptr[--enc_len] == '\0' );
+    String^ ret_dat = gcnew String( dst_ptr, 0, ++enc_len );
     return ret_dat;
 }
 
@@ -170,7 +171,8 @@ Yps::Base64::EncodeA( array<T>^ data )
     pin_ptr<T> src_ptr( &data[0] );
     uint out_len = base64_encodeData( (char*)dst_ptr, (byte*)src_ptr, inp_len, 0 );
     if (check(out_len)) return ArraySegment<byte>();
-    return ArraySegment<byte>( out_dat, 0, out_len );
+    while( dst_ptr[--out_len] == 0 );
+    return ArraySegment<byte>( out_dat, 0, ++out_len );
 }
 
 generic<class T> ArraySegment<T>
@@ -195,10 +197,12 @@ Yps::Base64::Encode( CryptBuffer^ buffer, int size )
 {
     Type^ inp_typ = buffer->Type;
     const uint need_size = BASE64_ENCODED_SIZE(size);
-    CryptBuffer^ output = gcnew CryptBuffer(inp_typ, (need_size / Marshal::SizeOf(inp_typ)) + 1);
+    CryptBuffer^ output = gcnew CryptBuffer( inp_typ, (need_size / Marshal::SizeOf(inp_typ)) + 1 );
     pin_ptr<byte> src( buffer->AsBytes() );
     pin_ptr<byte> dst( output->AsBytes() );
     output->Index = base64_encodeData( (char*)dst, src, size, 0 );
+    while( output[--output->ByteIndex] == 0 );
+    output->Index = ++output->ByteIndex;
     output->Type = inp_typ;
     return output;
 }
@@ -248,7 +252,9 @@ System::String^
 Yps::Base64::DecodeString( String^ data )
 {
     ArraySegment<byte> dec = DecodeW<byte>( data );
-    return Encoding::Default->GetString( dec.Array, 0, dec.Count );
+    int len = dec.Count;
+    while( dec.Array[--len] == 0 );
+    return Encoding::Default->GetString( dec.Array, 0, ++len );
 }
 
 

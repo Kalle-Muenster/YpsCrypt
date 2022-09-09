@@ -58,8 +58,8 @@ namespace Yps {
 		static String^ DecryptString( CryptKey^ key, String^ crypt_string );
 		static String^ EncryptString( CryptKey^ key, String^ plain_string );
 
-		static UInt32    EncryptFrame64( CryptKey^ key, UInt24 frame );
-		static UInt24    DecryptFrame64( CryptKey^ key, UInt32 frame );
+		static UInt32  EncryptFrame64( CryptKey^ key, UInt24 frame );
+		static UInt24  DecryptFrame64( CryptKey^ key, UInt32 frame );
 
 		generic<class T> where T : ValueType
 		static ArraySegment<T> BinaryEncrypt( CryptKey^ key, array<T>^ data );
@@ -69,7 +69,6 @@ namespace Yps {
 		static CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data ) { return Encrypt24( key, data, true ); }
 		static CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete );
 		
-
 		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata );
 		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata, bool checkHeader );
 		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticheader, CryptBuffer^ crypticData );

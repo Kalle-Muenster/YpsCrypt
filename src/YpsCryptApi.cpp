@@ -126,7 +126,9 @@ Yps::Crypt::EncryptW( CryptKey^ key, array<T>^ Src )
     ] = 0;
     if( check( size_out ) ) {
         return nullptr;
-    } String^ enc = gcnew String( dst, 0, size_out );
+    } 
+    while( dst[--size_out] == 0 );
+    String^ enc = gcnew String( dst, 0, ++size_out );
     return enc;
 }
 
@@ -146,9 +148,8 @@ Yps::Crypt::EncryptA( CryptKey^ key, array<T>^ Src )
     );
     if ( check(size_out) ) {
         return ArraySegment<byte>();
-    } while ( size_out <= size_enc-- ) {
-        *(dst++ + size_out) = 0;
-    } return ArraySegment<byte>( Dst, 0, size_out );
+    } while( Dst[--size_out] == 0 );
+    return ArraySegment<byte>( Dst, 0, ++size_out );
 }
 
 generic<class T> ArraySegment<T>
@@ -177,9 +178,8 @@ Yps::Crypt::DecryptW( CryptKey^ key, String^ cryptisch )
         src, Src->Length, dst );
     if( check( size_out ) ) {
         return ArraySegment<T>();
-    } while ( size_out < size_dec-- )
-        *(dst++ + size_out) = 0;
-    return ArraySegment<T>( Dst, 0, size_out/size_elm );
+    } while ( dst[--size_out] == 0 );
+    return ArraySegment<T>( Dst, 0, ++size_out/size_elm );
 }
 
 generic<class T> ArraySegment<T>
@@ -210,9 +210,8 @@ Yps::Crypt::DecryptA( CryptKey^ key, array<byte>^ Src )
 
     if( check(size_dec) ) {
         return ArraySegment<T>();
-    } while( size_dec < prox_dec-- )
-        *(dst++ + size_dec) = 0;
-    return ArraySegment<T>( Dst, 0, size_dec/size_elm );
+    } while( dst[--size_dec] == 0 );
+    return ArraySegment<T>( Dst, 0, ++size_dec/size_elm );
 }
 
 generic<class T> ArraySegment<T>
@@ -244,7 +243,6 @@ Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
     }
     int size_dst = size_src - 12;
     const int rest_dst = size_dst % size_ofT;
-    int null_dst = size_ofT - rest_dst;
     array<T>^ Dst = gcnew array<T>( (size_dst / size_ofT) + (rest_dst ? 1 : 0) );
     pin_ptr<T> src( &Src[0] );
     pin_ptr<T> dstT( &Dst[0] );
@@ -255,10 +253,8 @@ Yps::Crypt::BinaryDecrypt( CryptKey^ key, array<T>^ Src )
         size_src, dst );
     if ( check( size_dst ) ) {
         return ArraySegment<T>();
-    } while (null_dst) {
-        *(dst++ + size_dst) = 0;
-        --null_dst;
-    } return ArraySegment<T>( Dst, 0, size_dst/size_ofT );
+    } while( dst[--size_dst] == 0 );
+    return ArraySegment<T>( Dst, 0, ++size_dst/size_ofT );
 }
 
 System::UInt32
@@ -289,11 +285,10 @@ Yps::Crypt::DecryptString( CryptKey^ key, String^ crypt_string )
     array<byte>^ out_dat = gcnew array<byte>( dec_len + 1 );
     pin_ptr<byte> inp_ptr( &inp_dat[0] );
     pin_ptr<byte> out_ptr( &out_dat[0] );
-    const uint out_len = crypt64_decrypt( (K64*)key->ToPointer(), (char*)inp_ptr, inp_len, out_ptr );
+    uint out_len = crypt64_decrypt( (K64*)key->ToPointer(), (char*)inp_ptr, inp_len, out_ptr );
     if ( check(out_len) ) return nullptr;
-    uint len = out_len;
-    while ( len <= dec_len ) out_dat[len++] = 0;
-    return Encoding::Default->GetString( out_dat, 0, out_len );
+    while ( out_ptr[--out_len] == 0 );
+    return Encoding::Default->GetString( out_dat, 0, ++out_len );
 }
 
 String^
@@ -309,8 +304,8 @@ Yps::Crypt::EncryptString( CryptKey^ key, String^ plain_string )
     int out_len = (int)crypt64_encrypt( (K64*)key->ToPointer(), inp_ptr, inp_len, out_ptr );
     if ( check(out_len) ) return nullptr;
     out_dat[out_len] = 0;
-    String^ ret_dat = Encoding::Default->GetString( (byte*)out_ptr, out_len );
-    delete[] out_dat;
+    while ( out_ptr[--out_len] == 0 );
+    String^ ret_dat = Encoding::Default->GetString( (byte*)out_ptr, ++out_len );
     return ret_dat;
 }
 
