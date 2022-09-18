@@ -56,15 +56,13 @@
 
 #ifdef  APPEND_TILDE_FOR_ANDNOT
 #define ANDOPT(value) & ~##value
-#define NOTAND_ASSIGN(value) &= value
+#define NOTAND_ASSIGN(var,val) var = eType( var & val )
 #else
 #define ANDOPT(value) & value
-#define NOTAND_ASSIGN(value) &= ~##value
+#define NOTAND_ASSIGN(var,val) var = eType( var & ~##val )
 #endif
 
-#ifdef  USE_NAMESPACER
-#include <WaveLib.inl/namespacer.h>
-#elif defined(ENUM_OPERATOR_NAMESPACE)
+#ifdef  ENUM_OPERATOR_NAMESPACE
 #define BEGIN_NAMESPACE namespace ENUM_OPERATOR_NAMESPACE {
 #define ENDOF_NAMESPACE }
 #else
@@ -170,7 +168,7 @@ BEGIN_NAMESPACE
 	// implements as bitwise ANDNOT 'assignment' instead    
     template<typename eType> DECLARE_OPERATOR eType&
         operator &=(eType& eTval, eType mask) {
-        eTval = eType((ulong)eTval ANDOPT(mask));
+        eTval = eType( eTval ANDOPT( mask ) );
         return eTval;
     }
 
@@ -231,8 +229,8 @@ BEGIN_NAMESPACE
     }
     // unset 'allThese' bits on the passed 'variable'
     template<typename eType> DECLARE_OPERATOR eType
-        remFlag(eType& variable, eType allThese) {
-        return variable NOTAND_ASSIGN( allThese );
+        remFlag( eType& variable, eType allThese ) {
+        return NOTAND_ASSIGN( variable, allThese );
     }
 
 ENDOF_NAMESPACE
