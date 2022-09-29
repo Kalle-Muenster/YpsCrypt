@@ -98,9 +98,9 @@ COMMANDLINER_API cmOp    isAnyModus(cmLn wildcard);
 COMMANDLINER_API cmBl    isAnyModusAtAll(void);
 COMMANDLINER_API cmBl    isAnyOtherModusThen(cmLn);
 COMMANDLINER_API cmLn    getModus(cmOp ofOption);
-COMMANDLINER_API cmLn    getModusNumber(uint number);
-COMMANDLINER_API int     modusNumber(cmLn mode);
-COMMANDLINER_API cmIx    indexOfModusNumber(int number);
+COMMANDLINER_API cmLn    getModusByNumber(uint number);
+COMMANDLINER_API int     getNumberOfModus(cmLn mode);
+COMMANDLINER_API cmIx    idxOfModusNumber(int number);
 COMMANDLINER_API cmBl    hasModus(cmLn modus, cmLn name);
 
 // handling 'index' parameters (for access via index numbers)
@@ -166,7 +166,7 @@ COMMANDLINER_API void*   getDingens(const char* named);
 COMMANDLINER_API void    addDingens(const char* named, void* dings, void(*bumms)(void));
 COMMANDLINER_API void    remDingens(const char* named);
 
-COMMANDLINER_API cmLn    printSpList(char* list);
+COMMANDLINER_API char*   toPrintList(char* list);
 // split a string at contained 'fromSep' chars
 // to a list of 'toSep' separated substrings by
 // returning count on contained string elements

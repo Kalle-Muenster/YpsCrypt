@@ -8,7 +8,7 @@
 #define USE_FOURCC (1)
 #define USE_BASE64 (1)
 #define USE_CRYPT64 (1)
-#define USE_TOKKEN (0)
+#define USE_TOKKEN (1)
 
 #define SET_MAX_NAMELENGTH 255
 #define SET_MAX_NUMBERARGS 8

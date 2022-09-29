@@ -54,7 +54,7 @@ typedef StringPool POOL;
 #define POOL_FUNCTION(fnam,prms) pool_(fnam)( StringPool* inst, prms )
 #define POOL_FUNCTION2P(fnam,arg1,arg2) pool_(fnam)( StringPool* inst, arg1, arg2 )
 #define POOL_CREATE_BOTTOM(bottom) static StringPool bottom ## Instance = { \
-			{0}, {0}, {0}, EMPTY, EMPTY, 0, &bottom ## Instance, (char*)&bottom ## Instance.Cyc[0], 0 \
+			{0}, {0}, {0}, EMPTY, EMPTY, 0, 0, &bottom ## Instance, (char*)&bottom ## Instance.Cyc[0], 0 \
 	    }; static StringPool* bottom = pool_InitializeCycle_ex( whirlVar( &bottom ## Instance ) )
 #define pool_scope  POOL* Pool = pool_getBottom();
 
@@ -111,8 +111,12 @@ STRINGPOOL_API byte*   POOL_FUNCTION2P(setb, void* data, uint cbSize);
 #define pool_setb(ptDat,cbLen) pool_(setb)(Pool,ptDat,cbLen)
 
 // write 4byte (sizeof(uint)) binary 'data' into the pool
-STRINGPOOL_API uint*   POOL_FUNCTION(seti, uint data);
-#define pool_seti(uiDat) pool_(seti)(Pool,uiDat)
+STRINGPOOL_API byte*   POOL_FUNCTION(set4, uint data);
+#define pool_seti(uiDat) pool_(set4)(Pool,uiDat)
+
+// write 4byte (sizeof(uint)) binary 'data' into the pool
+STRINGPOOL_API byte*   POOL_FUNCTION(set8, ulong data);
+#define pool_seti(ullDat) pool_(set8)(Pool,ullDat)
 
 // write char 'c' 'count' times into the pool (e.g. like 'fill')
 STRINGPOOL_API char*   POOL_FUNCTION2P(setc, char c, uint count);
@@ -125,6 +129,11 @@ STRINGPOOL_API char*   POOL_FUNCTION2P(setf, const char* fmt, const char* src);
 // write int 'num' (formated by 'fmt') into the pool
 STRINGPOOL_API char*   POOL_FUNCTION2P(setfi, const char* fmt, int num);
 #define pool_setfi(strFmt,intSrc) pool_(setfi)(Pool,strFmt,intSrc)
+
+// Retreive a pointer to a counter variable which
+// increases with each pool_set() call that follows
+STRINGPOOL_API uint*   POOL_VOIDCALL(startCounter);
+#define pool_startCounter() pool_(startCounter)(Pool)
 
 // Check if a 'sizeplan' could match without
 // passing the point of no return at least.
