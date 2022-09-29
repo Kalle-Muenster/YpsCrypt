@@ -7,9 +7,9 @@
 \*\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 #include "YpsCryptLib.h"
-#include "YpsCryptApi.hpp"
 #include "CryptHelper.hpp"
 #include "CryptStream.hpp"
+#include "YpsCryptApi.hpp"
 #include <enumoperators.h>
 
 

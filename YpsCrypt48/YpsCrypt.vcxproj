@@ -194,6 +194,8 @@
   <ItemGroup>
     <ClInclude Include="..\lib\enumoperators.h" />
     <ClInclude Include="..\lib\versionmacro.h" />
+    <ClInclude Include="..\src\CryptParser.hpp" />
+    <ClInclude Include="..\src\CryptTokken.hpp" />
     <ClInclude Include="..\src\CryptBuffer.hpp" />
     <ClInclude Include="..\src\CryptHelper.hpp" />
     <ClInclude Include="..\src\CryptStream.hpp" />
@@ -205,6 +207,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\CryptBuffer.cpp" />
+    <ClCompile Include="..\src\CryptParser.cpp" />
+    <ClCompile Include="..\src\CryptTokken.cpp" />
     <ClCompile Include="..\src\CryptHelper.cpp" />
     <ClCompile Include="..\src\CryptStream.cpp" />
     <ClCompile Include="..\src\YpsCryptApi.cpp" />

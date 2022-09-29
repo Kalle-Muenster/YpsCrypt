@@ -28,6 +28,8 @@ namespace Yps
 
 	ref class CryptKey;
 	ref class Crypt;
+	generic<class T> interface class IParser;
+
 
 	public delegate void CryptBufferReleaseHandler( IntPtr data );
 

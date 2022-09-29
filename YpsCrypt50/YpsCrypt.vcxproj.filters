@@ -51,6 +51,12 @@
     <ClInclude Include="..\src\YpsCryptLib.hpp">
       <Filter>Quelldateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\CryptParser.hpp">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CryptTokken.hpp">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -69,6 +75,12 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\src\YpsCryptApi.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CryptParser.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CryptTokken.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

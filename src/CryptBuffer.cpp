@@ -7,6 +7,7 @@
 \*\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 #include <importdefs.h>
 #include "CryptHelper.hpp"
+#include "CryptParser.hpp"
 #include "CryptBuffer.hpp"
 #include "YpsCryptApi.hpp"
 
