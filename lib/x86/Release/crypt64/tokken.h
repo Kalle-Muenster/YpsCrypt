@@ -36,9 +36,9 @@ typedef struct TOKKEN_API tokken_Generator {
 } tokken_Generator;
 #endif
 
-TOKKEN_API tokken_Generator tokken_define( const char* grouping, tokken_CharSet mode );
-TOKKEN_API const char*      tokken_create( const tokken_Generator* mode );
-#define                     tokken_Create( tokenrator ) tokenerator->create( tokenerator )
+TOKKEN_API tokken_Generator* tokken_define( tokken_CharSet forMode, int size, const char* groupString );
+TOKKEN_API const char*       tokken_create( const tokken_Generator* mode );
+#define                      tokken_Create( tokenrator ) tokenerator->create( tokenerator )
 
 #if defined(__cplusplus)
 }
