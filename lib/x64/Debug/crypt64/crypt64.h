@@ -90,6 +90,7 @@ extern "C" {
     CRYPS64_API int      crypt64_canStream(K64F* stream);
     CRYPS64_API void     crypt64_flush(K64F* stream);
     CRYPS64_API void     crypt64_close(K64F* stream);
+    CRYPS64_API ptval    crypt64_sizeof(K64F* stream);
 
     CRYPS64_API K64* crypt64_allocateNewKey(void);
     CRYPS64_API K64* crypt64_initializeKey(K64* key, ulong value);

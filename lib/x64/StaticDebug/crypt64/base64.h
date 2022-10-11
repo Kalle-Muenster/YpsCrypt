@@ -144,7 +144,7 @@ extern "C" {
     BASE64_API uint        base64_swrite(const byte* src, uint size, uint count, b64Stream*); // write data 'src' into the de- or en-coding stream
     BASE64_API b64Frame    base64_getFrame(b64Stream*); // e.g. getch like function but gets an b64Frame instead of a char
     BASE64_API int         base64_putFrame(b64Stream*, b64Frame); // like putch but writes a b64Frame instead of a char
-
+    BASE64_API b64Frame    base64_peakWrite(b64Stream*); // peaks the next frame which will be 'overwritten' in a wb+/rb+ stream  
 
     BASE64_API B64Nuller   base64_Nuller(void);
 
