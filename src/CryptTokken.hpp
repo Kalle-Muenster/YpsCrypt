@@ -13,6 +13,7 @@ namespace Yps {
     public ref class Tokken
     {
     public:
+
         enum class CharSet {
             Base16 = 16,
             Base32 = 32,
@@ -24,8 +25,8 @@ namespace Yps {
 
         virtual ~Tokken( void );
 
-        System::String^ Get();
-        array<System::String^>^ Gen( int count );
+        System::String^         Next();
+        array<System::String^>^ Many( int count );
 
     private:
         System::IntPtr generator;

@@ -30,7 +30,6 @@ Yps::FileStream::crypticFopen( CryptKey^ key, String^ nam, uint mod )
 
 Yps::Stream::Stream( CryptKey^ pass, Flags mode )
     : System::IO::Stream() {
-    frame = gcnew array<byte>(3);
     flags = mode;
     crypt = pass;
     bytes = 0;
@@ -42,7 +41,7 @@ Yps::FileStream::FileStream( CryptKey^ pass, String^ path, Flags mode )
     if( !enum_utils::anyFlag( Flags::Decrypt|Flags::Encrypt, flags ) ) {
         if( enum_utils::hasFlag( flags, Flags::OpenWrite ) ) {
             flags = enum_utils::operator|(flags, Flags::Encrypt);
-            flags = enum_utils::operator&(flags, ~Flags::OpenRead);
+            flags = enum_utils::operator&(flags,~Flags::OpenRead);
         } else {
             flags = enum_utils::operator|(flags, Flags::Decrypt|Flags::OpenRead);
         }
@@ -54,7 +53,30 @@ Yps::FileStream::FileStream( CryptKey^ pass, String^ path, Flags mode )
 slong
 Yps::FileStream::Seek( slong offset, System::IO::SeekOrigin origin )
 {
-    throw gcnew System::Exception( "cryptic yps stream cannot seek" );
+    K64F* f = (K64F*)file.ToPointer();
+    bool write = CanWrite;
+    slong last = Position;
+    if( write && bytes )
+        crypt64_putYps( reinterpret_cast<b64Frame&>(frame.b64), f );
+
+    slong seek = 0;
+    switch (origin) {
+    case System::IO::SeekOrigin::Begin:
+        seek = offset;
+        break;
+    case System::IO::SeekOrigin::Current:
+        seek = last + offset;
+        break;
+    case System::IO::SeekOrigin::End:
+        seek = Length - offset;
+        break;
+    } Flush();
+
+    bytes = seek % 3;
+    seek -= bytes;
+    fseek( (FILE*)f->b64.dat, seek + 12, SEEK_SET );
+    if( write && bytes ) frame.b64 = crypt64_getYps( f ).u32;
+    return Position;
 }
 
 void
@@ -66,7 +88,7 @@ Yps::FileStream::SetLength( slong value )
 bool
 Yps::FileStream::CanSeek::get( void )
 {
-    return false;
+    return true;
 };
 
 
@@ -99,20 +121,23 @@ Yps::FileStream::Write( array<byte>^ buffer, int offset, int count )
         while (bytes < 3) {
             frame[bytes++] = buffer[offset++];
             --count;
-        } interior_ptr<byte> f = &frame[0];
-        bytes -= crypt64_putYps( (b64Frame&)f, (K64F*)file.ToPointer() );
-    }
-    int check = count % 3;
-    if (check) {
-        count -= check;
-        while (check) {
-            frame[bytes] = buffer[offset + count + bytes];
-            ++bytes;
-            --check;
-        }
-    }
+        } crypt64_putYps( reinterpret_cast<b64Frame&>(frame.b64), (K64F*)file.ToPointer() );
+    } bytes = count % 3;
+    count -= bytes;
+
     pin_ptr<byte> src( &buffer[offset] );
     crypt64_swrite( (byte*)src, 3u, (uint)(count/3u), (K64F*)file.ToPointer() );
+
+    if (bytes) {
+        frame.b64 = crypt64_getYps( (K64F*)file.ToPointer() ).u32;
+        const int endpos = offset + count;
+        int check = 0;
+        while (check < bytes) {
+            frame[check] = buffer[endpos + check];
+            ++check;
+        }
+    }
+
     catchError( "invalid base64 data" );
     if( wasError() ) { Crypt::error = Error( (uint)getErrorCode(), getError() );
         throw gcnew Exception( Crypt::error.Text );
@@ -130,6 +155,11 @@ Yps::FileStream::SizeCheckedWrite( array<byte>^ buffer, int byteOffset, int byte
     } return byteCount;
 }
 
+void
+Yps::Stream::PutFrame( ArraySegment<byte> frame )
+{
+    PutFrame( UInt24( frame[0] | (frame[1] << 8) | (frame[2] << 16) ) );
+}
 
 void
 Yps::FileStream::PutFrame( UInt24 frame )
@@ -138,7 +168,7 @@ Yps::FileStream::PutFrame( UInt24 frame )
 }
 
 UInt24
-Yps::FileStream::GetFrame(void)
+Yps::FileStream::GetFrame( void )
 {
     return reinterpret_cast<UInt24&>( crypt64_getYps( (K64F*)file.ToPointer() ).u32 );
 }
@@ -155,9 +185,7 @@ Yps::FileStream::Close(void)
     K64F* y64File = (K64F*)file.ToPointer();
     if( CanWrite ) {
         if( bytes ) {
-            while (bytes < 3) frame[bytes++] = 0;
-            interior_ptr<byte> ptf = &frame[0];
-            crypt64_putYps( (b64Frame&)ptf, y64File );
+            crypt64_putYps( reinterpret_cast<b64Frame&>( frame.b64 ), y64File );
             crypt64_flush( y64File );
         }
     } crypt64_close( y64File );
@@ -166,9 +194,7 @@ Yps::FileStream::Close(void)
 slong
 Yps::FileStream::Length::get(void)
 {
-    // TODO: make possible retrieving stream length via 
-    //       some crypt64 function like 'crypt64_length(K64F*)'
-    return (slong)((K64F*)file.ToPointer())->b64.len;
+    return crypt64_sizeof( (K64F*)file.ToPointer() );
 }
 
 slong

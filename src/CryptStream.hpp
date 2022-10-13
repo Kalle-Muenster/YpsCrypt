@@ -34,21 +34,26 @@ namespace Yps {
 
         virtual int SizeCheckedWrite( array<byte>^ buffer, int offset, int count ) abstract;
         virtual void PutFrame( UInt24 frame ) abstract;
+        void PutFrame( ArraySegment<byte> frame );
         virtual UInt24 GetFrame( void ) abstract;
 
     protected:
         CryptKey^    crypt;
         Flags        flags;
         int          bytes;
-        array<byte>^ frame;
+        CryptFrame   frame;
     };
 
+    /// @brief Yps.FileStream - create a file for writing to it via System.IO.Stream Interface.
+    /// Any data writen, will arive the file as binary data, encrypted by key used for opening
+    /// the stream. Or: open an Yps.FileStream from an already cryptic file and directly read 
+    /// file content as cleartext, non-cryptic data     
     public ref class FileStream
         : public Stream
     {
     public:
 
-        FileStream( CryptKey^ pass, String^ file, Flags mode );
+        FileStream( CryptKey^ pass, String^ path, Flags mode );
 
         virtual ~FileStream( void );
 
@@ -63,17 +68,18 @@ namespace Yps {
             void set(long long) override;
         };
 
-        virtual void Flush() override;
-        virtual void Close() override;
-        virtual int Read( array<byte>^ buffer, int offset, int count ) override;
-        virtual long long Seek( long long offset, System::IO::SeekOrigin origin ) override;
-        virtual void SetLength( long long value ) override;
-        virtual void Write( array<byte>^ buffer, int offset, int count ) override;
-        virtual int  SizeCheckedWrite( array<byte>^ buffer, int offset, int count ) override;
-        virtual void PutFrame( UInt24 frame ) override;
+        virtual void   Flush() override;
+        virtual void   Close() override;
+        virtual int    Read( array<byte>^ buffer, int offset, int count ) override;
+        virtual slong  Seek( slong offset, System::IO::SeekOrigin origin ) override;
+        virtual void   SetLength( slong value ) override;
+        virtual void   Write( array<byte>^ buffer, int offset, int count ) override;
+        virtual int    SizeCheckedWrite( array<byte>^ buffer, int offset, int count ) override;
+        virtual void   PutFrame( UInt24 frame ) override;
         virtual UInt24 GetFrame( void ) override;
 
     private:
+
         static IntPtr crypticFopen( CryptKey^ key, String^ nam, unsigned mod );
         IntPtr  file;
     };

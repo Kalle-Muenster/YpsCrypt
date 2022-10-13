@@ -37,33 +37,33 @@ namespace Yps
         public CrypsTests( bool verbose, bool xml ) 
             : base( verbose, xml )
         {
-            AddTestCase("CryptBuffer", cryptingBuffer);
+            AddTestCase("CryptBufferStruct", cryptingBuffer);
             AddTestCase("Base64Encoding", base64encoding, true);
             AddTestCase("Base64Decoding", base64decoding, false);
 
-            AddTestCase("CreatingKeys", creatingKey);
+            AddTestCase("CryptKeyCreation", creatingKey);
 
-            AddTestCase("Encrypting", encryptingStrings, true);
-            AddTestCase("Decrypting", decryptingStrings, false);
+            AddTestCase("StringEncrypting", encryptingStrings, true);
+            AddTestCase("StringDecrypting", decryptingStrings, false);
 
             AddTestCase("BinaryEncrypting", encryptingBinar, true);
             AddTestCase("BinaryDecrypting", decryptingBinar, false);
 
-            AddTestCase("Encrypt24", encryptingDirectly, true);
-            AddTestCase("Decrypt24", decryptingDirectly, false);
+            AddTestCase("DirectEncrypting", encryptingDirectly, true);
+            AddTestCase("DirectDecrypting", decryptingDirectly, false);
 
-            AddTestCase("EncryptionStream", encryptStreams, true);
-            AddTestCase("DecryptionStream", decryptStreams, false);
+            AddTestCase("StreamEncrypting", encryptStreams, true);
+            AddTestCase("StreamDecrypting", decryptStreams, false);
 
             AddTestCase("EncryptingFiles", encryptingFiles, true);
             AddTestCase("DecryptingFiles", decryptingFiles, false);
 
-            AddTestCase("CryptingErrors", cryptingErrors);
+            AddTestCase("CryptErrorCodes", cryptingErrors);
 
-            AddTestCase("OuterCrypticEnumerator", outerCryptics);
+            AddTestCase("SearchCrypticData", outerCryptics);
 
             AddTestCase("CryptBufferDisposal", disposingBuffes);
-            AddTestCase("De-Initialization", deInitialization);
+            AddTestCase("DeInitialization", deInitialization);
         }
         
         private void encryptStreams()
@@ -161,7 +161,7 @@ namespace Yps
         {
             InfoStep("Creating a new CryptBuffer of {0} bytes length", 50);
             dat = new CryptBuffer( 50 );
-            CheckStep( dat.Length >= 50, "Creating a CryptBuffer of matching length {0}", 50 );
+            CheckStep( dat.Length >= 50, "Created CryptBuffer has matching length {0} byte", 50 );
 
             InfoStep( "Exchange CryptBuffer data against an existing buffer array" );
             dat.SetData( bytesbin );
@@ -182,16 +182,12 @@ namespace Yps
         private void base64encoding()
         {
             b64data = Base64.EncodeString( testdata );
-            if (b64data == null)
-                FailStep(string.Format("calling Yps.Base64.EncodeString() returned {0}", Base64.Error));
-            else
-                PassStep(string.Format("calling Yps.Base64.EncodeString() returned {0} charracters", b64data.Length ));
-
+            bool pass = b64data != null;
+            CheckStep( pass, string.Format("calling Yps.Base64.EncodeString() returned {0}", pass ? b64data : Base64.Error ) );
+            
             b64data = Base64.Encode( new CryptBuffer( bytesbin ) ).ToString( Encoding.Default );
-            if( b64data == null )
-                FailStep(string.Format("calling Yps.Base64.Encode(buffer) returned {0}", Base64.Error));
-            else
-                PassStep(string.Format("calling Yps.Base64.Encode(buffer) returned {0}", b64data ));
+            pass = b64data != null;
+            CheckStep( pass, string.Format("calling Yps.Base64.Encode(buffer) returned {0}", pass ? b64data : Base64.Error ) );
         }
 
         private void base64decoding()
@@ -201,9 +197,7 @@ namespace Yps
                 FailStep(string.Format("calling Yps.Base64.DecodeString() returned {0}", Base64.Error));
             } else {
                 PassStep( string.Format("calling Yps.Base64.DecodeString() returned {0} charracters", result.Length ));
-
-            }
-            MatchStep( result, testdata, "strings" );
+            } MatchStep( result, testdata, "strings" );
         }
 
         protected void creatingKey()
@@ -256,7 +250,7 @@ namespace Yps
 
         protected void encryptingStrings()
         {
-            // case: encrypting plain strings to cryptic base64 data
+            // case: encrypting plain strings to cryptic, base64 encoded data 
 
             // encrypt the plain text string from testdata set 
             b64crypt = keypassa.Encrypt( testdata );
@@ -304,7 +298,7 @@ namespace Yps
         private void decryptingBinar()
         {
             string result = null;
-            // try binary decrypting a string that previously had been encrypted binary
+            // try binary decrypting a string that previously had been binary encrypted
             ArraySegment<byte> segment = Crypt.BinaryDecrypt( keypassa, bincrypt );
             unsafe { fixed ( byte* saege = &segment.Array[segment.Offset] ) {
                      result = Encoding.Default.GetString( saege, segment.Count );

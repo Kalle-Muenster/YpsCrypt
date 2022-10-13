@@ -18,7 +18,7 @@ Yps::Tokken::Tokken( CharSet set, int size )
 
 Yps::Tokken::Tokken( CharSet set, System::String^ grouping )
 {
-    char buffer[16];
+    char buffer[32];
     const int length = grouping->Length;
     for (int i = 0; i < length; ++i)
         buffer[i] = (char)grouping[i];
@@ -33,13 +33,13 @@ Yps::Tokken::~Tokken(void)
 
 
 System::String^
-Yps::Tokken::Get()
+Yps::Tokken::Next()
 {
     return gcnew System::String( tokken_create( (tokken_Generator*)generator.ToPointer() ) );
 }
 
 array<System::String^>^
-Yps::Tokken::Gen( int count )
+Yps::Tokken::Many( int count )
 {
     array<System::String^>^ token = gcnew array<System::String^>( count );
     tokken_Generator* tokomako = (tokken_Generator*)generator.ToPointer();
