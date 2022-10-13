@@ -158,7 +158,7 @@ Yps::FileStream::SizeCheckedWrite( array<byte>^ buffer, int byteOffset, int byte
 void
 Yps::Stream::PutFrame( ArraySegment<byte> frame )
 {
-    PutFrame( UInt24( frame[0] | (frame[1] << 8) | (frame[2] << 16) ) );
+    this->PutFrame( UInt24( frame.Array[frame.Offset] | (frame.Array[frame.Offset+1] << 8) | (frame.Array[frame.Offset+2] << 16) ) );
 }
 
 void

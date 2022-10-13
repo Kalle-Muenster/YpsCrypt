@@ -183,11 +183,11 @@ namespace Yps
         {
             b64data = Base64.EncodeString( testdata );
             bool pass = b64data != null;
-            CheckStep( pass, string.Format("calling Yps.Base64.EncodeString() returned {0}", pass ? b64data : Base64.Error ) );
+            CheckStep( pass, string.Format("calling Yps.Base64.EncodeString() returned {0}", pass ? b64data : Base64.Error.ToString() ) );
             
             b64data = Base64.Encode( new CryptBuffer( bytesbin ) ).ToString( Encoding.Default );
             pass = b64data != null;
-            CheckStep( pass, string.Format("calling Yps.Base64.Encode(buffer) returned {0}", pass ? b64data : Base64.Error ) );
+            CheckStep( pass, string.Format("calling Yps.Base64.Encode(buffer) returned {0}", pass ? b64data : Base64.Error.ToString() ) );
         }
 
         private void base64decoding()
