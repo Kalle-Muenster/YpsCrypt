@@ -8,6 +8,8 @@
 
 #include "YpsCryptLib.h"
 #include "CryptHelper.hpp"
+#include "CryptParser.hpp"
+#include "CryptBuffer.hpp"
 #include "CryptStream.hpp"
 #include "YpsCryptApi.hpp"
 #include <enumoperators.h>
@@ -34,6 +36,34 @@ Yps::Stream::Stream( CryptKey^ pass, Flags mode )
     crypt = pass;
     bytes = 0;
  }
+
+void
+Yps::Stream::PutFrame( ArraySegment<byte> frame )
+{
+    this->PutFrame( UInt24(frame.Array[frame.Offset] | (frame.Array[frame.Offset + 1] << 8) | (frame.Array[frame.Offset + 2] << 16)) );
+}
+
+int
+Yps::Stream::FillFrame( ArraySegment<byte> data )
+{
+    int count = data.Count;
+    if( bytes ) { int i = 0;
+        for(; bytes < 3; ++bytes, ++i ) {
+            frame[bytes] = data.Array[data.Offset + i];
+        } count -= i;
+        this->PutFrame( frame.bin );
+    } bytes = count % 3;
+    return count - bytes;
+}
+
+void
+Yps::Stream::LoadFrame( array<byte>^ data, int endo )
+{
+    frame.bin = this->GetFrame();
+    for( int check = 0; check < bytes; ++check )
+        frame[check] = data[endo + check];
+}
+
 
 Yps::FileStream::FileStream( CryptKey^ pass, String^ path, Flags mode )
     : Yps::Stream( pass, mode )
@@ -117,26 +147,31 @@ Yps::FileStream::Read( array<byte>^ buffer, int offset, int count )
 void
 Yps::FileStream::Write( array<byte>^ buffer, int offset, int count )
 {
-    if (bytes) {
-        while (bytes < 3) {
-            frame[bytes++] = buffer[offset++];
-            --count;
-        } crypt64_putYps( reinterpret_cast<b64Frame&>(frame.b64), (K64F*)file.ToPointer() );
-    } bytes = count % 3;
-    count -= bytes;
+    count = this->FillFrame( ArraySegment<byte>( buffer, offset, count ) );
+    //crypt64_putYps( reinterpret_cast<b64Frame&>(frame.b64), (K64F*)file.ToPointer() );
+
+    //if (bytes) {
+    //    while (bytes < 3) {
+    //        frame[bytes++] = buffer[offset++];
+    //        --count;
+    //    } crypt64_putYps( reinterpret_cast<b64Frame&>(frame.b64), (K64F*)file.ToPointer() );
+    //} bytes = count % 3;
+    //count -= bytes;
 
     pin_ptr<byte> src( &buffer[offset] );
     crypt64_swrite( (byte*)src, 3u, (uint)(count/3u), (K64F*)file.ToPointer() );
 
-    if (bytes) {
-        frame.b64 = crypt64_getYps( (K64F*)file.ToPointer() ).u32;
-        const int endpos = offset + count;
-        int check = 0;
-        while (check < bytes) {
-            frame[check] = buffer[endpos + check];
-            ++check;
-        }
-    }
+    if( bytes ) this->LoadFrame( buffer, offset + count );
+
+    //if (bytes) {
+    //    frame.b64 = crypt64_getYps( (K64F*)file.ToPointer() ).u32;
+    //    const int endpos = offset + count;
+    //    int check = 0;
+    //    while (check < bytes) {
+    //        frame[check] = buffer[endpos + check];
+    //        ++check;
+    //    }
+    //}
 
     catchError( "invalid base64 data" );
     if( wasError() ) { Crypt::Api->error = Error( (uint)getErrorCode(), getError() );
@@ -153,12 +188,6 @@ Yps::FileStream::SizeCheckedWrite( array<byte>^ buffer, int byteOffset, int byte
     if( wasError() ) { Crypt::Api->error = Error( getErrorCode(), getError() );
         throw gcnew Exception( Crypt::Api->error.Text );
     } return byteCount;
-}
-
-void
-Yps::Stream::PutFrame( ArraySegment<byte> frame )
-{
-    this->PutFrame( UInt24( frame.Array[frame.Offset] | (frame.Array[frame.Offset+1] << 8) | (frame.Array[frame.Offset+2] << 16) ) );
 }
 
 void
@@ -207,4 +236,170 @@ void
 Yps::FileStream::Position::set( slong value )
 {
     Seek( value, System::IO::SeekOrigin::Begin );
+}
+
+
+// Yps::MomoryStream  /////////////////////////////////////////////////////////////////////////////
+
+
+Yps::MemoryStream::MemoryStream( Yps::CryptKey^ pass, CryptBuffer^ store, Yps::Stream::Flags mode )
+    : Yps::Stream::Stream( pass, flags )
+    , buffer( store ) {
+    openStream( pass );
+}
+
+Yps::MemoryStream::MemoryStream( Yps::CryptKey^ pass, uint size, Yps::Stream::Flags flags )
+    : MemoryStream( pass, gcnew CryptBuffer( gcnew array<byte>( size ) ), flags ) {
+}
+
+void
+Yps::MemoryStream::openStream( CryptKey^ pass )
+{
+    if( enum_utils::hasFlag( flags, Stream::Flags::Encrypt ) ) {
+        stream = buffer->GetOuterCrypticEnumerator( pass, 0 );
+    } else
+    if( enum_utils::hasFlag( flags, Stream::Flags::Decrypt ) ) {
+        stream = buffer->GetInnerCrypticEnumerator( pass, 0 );
+    }
+}
+
+array<byte>^
+Yps::MemoryStream::GetBuffer()
+{
+    return safe_cast<array<byte>^>( buffer->GetData() );
+}
+
+void
+Yps::MemoryStream::SetBuffer( array<byte>^ newBuffer )
+{
+    Close();
+    buffer->SetData( newBuffer );
+}
+
+Yps::MemoryStream::~MemoryStream( void )
+{
+    stream->~CrypticEnumerator();
+    buffer->~CryptBuffer();
+}
+
+bool 
+Yps::MemoryStream::CanSeek::get(void)
+{
+    return true;
+};
+
+slong
+Yps::MemoryStream::Length::get(void) 
+{
+    return buffer->GetDataSize();
+};
+
+slong
+Yps::MemoryStream::Position::get( void ) {
+    return (stream->Position * 3) + bytes;
+};
+void
+Yps::MemoryStream::Position::set( slong value ) {
+    Seek( value, System::IO::SeekOrigin::Begin );
+}
+
+void
+Yps::MemoryStream::Close()
+{
+    if( CanWrite ) {
+        if( bytes )
+            this->PutFrame( frame.bin );
+    } stream->Reset();
+}
+
+int
+Yps::MemoryStream::Read( array<byte>^ buffer, int offset, int count )
+{
+    pin_ptr<byte> data = &buffer[offset];
+    const UInt24* end = (UInt24*)data + (count/3); count = 0;
+    for ( UInt24* dst = (UInt24*)data; stream->MoveNext() && dst < end; ++dst, ++count ) {
+        *dst = stream->Current;
+    } offset += ( count *= 3 );
+    if( offset < buffer->Length )
+        buffer[offset] = '\0';
+    return count;
+}
+
+slong
+Yps::MemoryStream::Seek( slong offset, System::IO::SeekOrigin origin )
+{
+    bool write = CanWrite;
+    slong last = Position;
+    if( write && bytes )
+        this->PutFrame( frame.bin );
+
+    slong seek = 0;
+    switch( origin ) {
+    case System::IO::SeekOrigin::Begin:
+        seek = offset; break;
+    case System::IO::SeekOrigin::Current:
+        seek = last + offset; break;
+    case System::IO::SeekOrigin::End:
+        seek = Length - offset; break;
+    } bytes = seek % 3;
+    seek -= bytes;
+    
+    stream->Position = (seek / 3);
+    if( write && bytes ) frame.bin = this->GetFrame();
+    return Position;
+}
+
+void 
+Yps::MemoryStream::SetLength( slong value )
+{
+    throw gcnew Exception( "cryptic yps stream cannot resize" );
+}
+
+void
+Yps::MemoryStream::Write( array<byte>^ buffer, int offset, int count )
+{
+    count = this->FillFrame( ArraySegment<byte>( buffer, offset, count ) );
+
+    pin_ptr<byte> src( &buffer[offset] );
+    const UInt24* end = (UInt24*)src + (count / 3u);
+    for ( UInt24* dst = (UInt24*)src; stream->MoveNext() && dst < end; ++dst ) {
+        stream->Current = *dst;
+    }
+
+    if( bytes ) this->LoadFrame( buffer, offset + count );
+
+    catchError("invalid base64 data");
+    if (wasError()) {
+        Crypt::Api->error = Error( (uint)getErrorCode(), getError() );
+        throw gcnew Exception( Crypt::Api->error.Text );
+    }
+}
+
+int   
+Yps::MemoryStream::SizeCheckedWrite( array<byte>^ buffer, int offset, int count )
+{
+    pin_ptr<byte> Src( &buffer[offset] );
+    const UInt24* end = (UInt24*)Src + ( count /= 3 );
+    for ( UInt24* src = (UInt24*)Src; stream->MoveNext() && src < end; ++src ) {
+        stream->Current = *src;
+    }
+    count *= 3;
+    catchError("invalid base64 data");
+    if( wasError() ) {
+        Crypt::Api->error = Error( getErrorCode(), getError() );
+        throw gcnew Exception( Crypt::Api->error.Text );
+    } return count;
+}
+
+void   
+Yps::MemoryStream::PutFrame( UInt24 frame )
+{
+    if ( stream->MoveNext() ) stream->Current = frame;
+}
+
+UInt24
+Yps::MemoryStream::GetFrame( void ) 
+{
+    stream->MoveNext();
+    return stream->Current;
 }

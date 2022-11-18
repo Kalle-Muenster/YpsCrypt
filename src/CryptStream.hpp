@@ -42,6 +42,9 @@ namespace Yps {
         Flags        flags;
         int          bytes;
         CryptFrame   frame;
+
+        int  FillFrame( ArraySegment<byte> data );
+        void LoadFrame( array<byte>^ data, int endo );
     };
 
     /// @brief Yps.FileStream - create a file for writing to it via System.IO.Stream Interface.
@@ -82,6 +85,48 @@ namespace Yps {
 
         static IntPtr crypticFopen( CryptKey^ key, String^ nam, unsigned mod );
         IntPtr  file;
+    };
+
+    public ref class MemoryStream
+        : public Stream
+    {
+    public:
+
+        MemoryStream( CryptKey^ pass, CryptBuffer^ store, Flags mode );
+        MemoryStream( CryptKey^ pass, uint size, Flags mode );
+
+        virtual ~MemoryStream( void );
+
+        virtual property bool CanSeek {
+            bool get(void) override;
+        };
+        virtual property long long Length {
+            long long get(void) override;
+        };
+        virtual property long long Position {
+            long long get(void) override;
+            void set(long long) override;
+        };
+
+        virtual void   Flush( void ) override {};
+        virtual void   Close( void ) override;
+        virtual int    Read( array<byte>^ buffer, int offset, int count ) override;
+        virtual slong  Seek( slong offset, System::IO::SeekOrigin origin ) override;
+        virtual void   SetLength( slong value ) override;
+        virtual void   Write( array<byte>^ buffer, int offset, int count ) override;
+        virtual int    SizeCheckedWrite( array<byte>^ buffer, int offset, int count ) override;
+        virtual void   PutFrame( UInt24 frame ) override;
+        virtual UInt24 GetFrame( void ) override;
+
+        array<byte>^   GetBuffer();
+        void           SetBuffer( array<byte>^ setBuffer );
+
+    private:
+
+        CryptBuffer::CrypticEnumerator<UInt24,UInt24>^ stream;
+        CryptBuffer^                                   buffer;
+
+        void openStream( CryptKey^ pass );
     };
 
 } //end of Yps
