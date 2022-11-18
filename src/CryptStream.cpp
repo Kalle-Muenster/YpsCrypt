@@ -139,8 +139,8 @@ Yps::FileStream::Write( array<byte>^ buffer, int offset, int count )
     }
 
     catchError( "invalid base64 data" );
-    if( wasError() ) { Crypt::error = Error( (uint)getErrorCode(), getError() );
-        throw gcnew Exception( Crypt::error.Text );
+    if( wasError() ) { Crypt::Api->error = Error( (uint)getErrorCode(), getError() );
+        throw gcnew Exception( Crypt::Api->error.Text );
     }
 }
 
@@ -150,8 +150,8 @@ Yps::FileStream::SizeCheckedWrite( array<byte>^ buffer, int byteOffset, int byte
     pin_ptr<byte> src( &buffer[byteOffset] );
     byteCount = (int)crypt64_swrite( (byte*)src, 1u, (uint)byteCount, (K64F*)file.ToPointer() );
     catchError( "invalid base64 data" );
-    if( wasError() ) { Crypt::error = Error( getErrorCode(), getError() );
-        throw gcnew Exception( Crypt::error.Text );
+    if( wasError() ) { Crypt::Api->error = Error( getErrorCode(), getError() );
+        throw gcnew Exception( Crypt::Api->error.Text );
     } return byteCount;
 }
 

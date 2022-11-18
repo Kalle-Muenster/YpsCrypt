@@ -9,19 +9,19 @@ using namespace Stepflow;
 
 // resolve YpsCrypt error codes
 System::String^
-Yps::Error::GetText( int code )
+Yps::Error::GetText( uint code )
 {
     switch (code) {
-        case 0: return gcnew String("No error");
+        case 0: return gcnew String( "No error" );
         case CONTXT_ERROR: return gcnew String("Context unrelated operation");
-        case FORMAT_ERROR: return gcnew String("Data has wrong encryption format");
+        case FORMAT_ERROR: return gcnew String("Data of wrong encryption format");
+        case PHRASE_ERROR: return gcnew String("Wrong key for decrypting data");
         case TABLES_ERROR: return gcnew String("Wrong or invalid cryption table");
         case STREAM_ERROR: return gcnew String("Wrong cryption stream direction");
         case OUTPUT_ERROR: return gcnew String("Output destination invalid");
         case INPUTS_ERROR: return gcnew String("Source or input data invalid");
-        case PHRASE_ERROR: return gcnew String("Wrong password entered or used");
-        case HEADER_ERROR: return gcnew String("Invalid encryption format header");
-        default: return gcnew String("Unknown error within YpsCrypt library");
+        case HEADER_ERROR: return gcnew String("Invalid cryptic data header");
+        default: return gcnew String( "Unknown error within YpsCrypt library" );
     }
 }
 
@@ -44,9 +44,16 @@ Yps::Crypt::GetVersionString()
 
 static Yps::Crypt::Crypt( void )
 {
-    Yps::Crypt::error = Yps::Error::NoError;
+    inst = gcnew Crypt();
+    Yps::Crypt::Api->error = Yps::Error::NoError;
     runs = false;
-    Yps::Crypt::Init( true );
+    Yps::Crypt::Api->Init( true );
+}
+
+Yps::Crypt^
+Yps::Crypt::Api::get(void)
+{
+    return inst;
 }
 
 void
@@ -56,7 +63,7 @@ Yps::Crypt::Init( bool init )
         runs = init;
         crypt64_Initialize( true );
         if( wasError() ) {
-            Crypt::error = Yps::Error( getErrorCode(), getError() );
+            Crypt::Api->error = Yps::Error( getErrorCode(), getError() );
         } (gcnew Cleansener())->~Cleansener();
     } else if ( (!init) && runs ) {
         runs = init;
@@ -92,22 +99,22 @@ Yps::Crypt::check( uint size )
         switch( code ) {
         case BINARY:
         case BASE64:
-        case 7955819:
-        case 4605510:
+        case PHRASE_ERROR:
+        case UNKNOWNERROR:
         case CONTXT_ERROR:
         case STREAM_ERROR:
         case NOT_INITIALIZED:
-        case FORMAT_ERROR: Crypt::error = Yps::Error( code, getError() ); break;
-        default: Crypt::error = Yps::Error( code, getError(), size ); break;
+        case FORMAT_ERROR: error = Yps::Error( code, getError() ); break;
+        default: error = Yps::Error( code, getError(), size ); break;
         } clearAllErrors();
         if ( size > 0 ) return false;
-    } return Crypt::error;
+    } return error;
 }
 
 bool Yps::Crypt::fail( void )
 {
-    if ( !wasError() ) Crypt::error = Yps::Error::NoError;
-    return Crypt::error;
+    if ( !wasError() ) error = Yps::Error::NoError;
+    return error;
 }
 
 generic<class T> String^
@@ -146,7 +153,7 @@ Yps::Crypt::EncryptA( CryptKey^ key, array<T>^ Src )
         static_cast<K64*>( key->ToPointer() ),
         (byte*)src, size_inp, dst
     );
-    if ( check(size_out) ) {
+    if ( check( size_out ) ) {
         return ArraySegment<byte>();
     } while( Dst[--size_out] == 0 );
     return ArraySegment<byte>( Dst, 0, ++size_out );
@@ -286,7 +293,7 @@ Yps::Crypt::DecryptString( CryptKey^ key, String^ crypt_string )
     pin_ptr<byte> inp_ptr( &inp_dat[0] );
     pin_ptr<byte> out_ptr( &out_dat[0] );
     uint out_len = crypt64_decrypt( (K64*)key->ToPointer(), (char*)inp_ptr, inp_len, out_ptr );
-    if ( check(out_len) ) return nullptr;
+    if ( check( out_len ) ) return nullptr;
     while ( out_ptr[--out_len] == 0 );
     return Encoding::Default->GetString( out_dat, 0, ++out_len );
 }
@@ -302,7 +309,7 @@ Yps::Crypt::EncryptString( CryptKey^ key, String^ plain_string )
     pin_ptr<byte> inp_ptr( &inp_dat[0] );
     pin_ptr<char> out_ptr( &out_dat[0] );
     int out_len = (int)crypt64_encrypt( (K64*)key->ToPointer(), inp_ptr, inp_len, out_ptr );
-    if ( check(out_len) ) return nullptr;
+    if ( check( out_len ) ) return nullptr;
     out_dat[out_len] = 0;
     while ( out_ptr[--out_len] == 0 );
     String^ ret_dat = Encoding::Default->GetString( (byte*)out_ptr, ++out_len );
@@ -360,6 +367,43 @@ Yps::Crypt::CreateHeader( CryptKey^ key, CrypsFlags mod )
 	    } 
     } else setError( "context", CONTXT_ERROR );
     return (CryptBuffer^)nullptr;
+}
+
+bool
+Yps::Crypt::VerifyHeader( CryptKey^ key, CryptBuffer^ hdr, CrypsFlags mod )
+{
+    K64* k = (K64*)key->ToPointer();
+    bool valid = false;
+    if( crypt64_currentContext() != crypt64_getHashFromKey(k) ) {
+        CRYPS64 mode = CRYPS64(0);
+        while( (!valid) && mod > CrypsFlags(0) ) {
+            if (mod.HasFlag(CrypsFlags::Binary)) mode = BINARY;
+            else if (mod.HasFlag(CrypsFlags::Base64)) mode = BASE64;
+            if( crypt64_prepareContext( k, mode ) ) {
+                if( crypt64_verifyValidator( k, (const byte*)hdr->GetPointer().ToPointer() ) ) {
+                    return valid = true;
+                } else if( (byte)mod != mode ) {
+                    if( catchErrorCode( FORMAT_ERROR ) ) {
+                        mod = CrypsFlags( (CRYPS64)mod & ~mode );
+                    } else mod = CrypsFlags(0);
+                } else mod = CrypsFlags(0);
+            } crypt64_releaseContext( k );
+        } 
+    } return valid;
+}
+
+bool
+Yps::Crypt::VerifyHeader( CryptKey^ key, CryptBuffer^ hdr )
+{
+    return VerifyHeader( key, hdr, CrypsFlags::Binary );
+}
+
+bool
+Yps::Crypt::VerifyHeader( CryptKey^ key, String^ data )
+{
+    if( data->Length > 16 ) data = data->Substring( 0, 16 );
+    CryptBuffer^ hdr = gcnew CryptBuffer( System::Text::Encoding::Default->GetBytes( data ) );
+    return VerifyHeader( key, hdr, CrypsFlags::Base64 );
 }
 
 void
@@ -479,7 +523,7 @@ Yps::Crypt::BeginDeString( CryptKey^ key, CryptBuffer^ encryptedData )
         return false;
     }
     else if( encryptedData->GetDataSize() < 16 ) {
-        setError( "header", CRYPS64::FORMAT_ERROR );
+        setError( "header", HEADER_ERROR );
         return false;
     }
     K64* k = static_cast<K64*>( key->ToPointer() );
@@ -590,7 +634,7 @@ Yps::Crypt::EncryptFile( CryptKey^ key, System::IO::FileInfo^ file )
         if ( check( encsize ) ) return -1;
         else return (int)encsize;
     } else {
-        error = Yps::Error( INPUTS_ERROR, "File doesn't exists" );
+        error = Yps::Error( INPUTS_ERROR, "File doesn't exist" );
         return -1;
     }
 }
@@ -617,7 +661,7 @@ Yps::Crypt::DecryptFile( CryptKey^ key, System::IO::FileInfo^ file )
         if( check(decsize) ) return -1;
         else return (int)decsize;
     } else {
-        error = Yps::Error( INPUTS_ERROR, "File doesn't existy" );
+        error = Yps::Error( INPUTS_ERROR, "File doesn't exist" );
         return -1;
     }
 }

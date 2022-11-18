@@ -151,10 +151,10 @@ namespace Yps
 
 		const static Error NoError = Error( 0u, "No Error" );
 
-		static  String^ GetText( int error );
+		static  String^ GetText( uint eCode );
 		virtual String^ ToString( void ) override;
 
-		property int Code { int get(void) { return code; } }
+		property int Code { int get(void) { return (int)code; } }
 		property String^ Text {	String^ get(void); }
 		static operator bool( Error cast ) { return cast.code != 0; }
 	};

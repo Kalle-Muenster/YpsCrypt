@@ -21,65 +21,73 @@ namespace Yps {
 	public ref class Crypt
 	{
 	private:
+		static Crypt^        inst;
 		static volatile bool runs;
-		static bool check( unsigned size );
-		static bool fail();
+		bool check( unsigned size );
+		bool fail();
 
 	internal:
-		static Error error;
-		static bool chkHeader24( CryptKey^ key, CryptBuffer^ hdr );
-		static bool useHeader24( CryptKey^ key, CryptBuffer^ hdr );
-		static void headerDtorFunc( IntPtr data );
+		Error error;
+		bool chkHeader24( CryptKey^ key, CryptBuffer^ hdr );
+		bool useHeader24( CryptKey^ key, CryptBuffer^ hdr );
+		void headerDtorFunc( IntPtr data );
 
 	public:
 		static Crypt();
 
-		static unsigned GetVersionNumber();
-		static String^ GetVersionString();
-		static void Init( bool init );
+		static property Crypt^ Api { Crypt^ get(void); }
 
-		static unsigned long long CalculateHash( array<unsigned char>^ data );
-		static unsigned long long CalculateHash( String^ string );
-		static CryptKey^ CreateKey( String^ password );
-		static CryptKey^ CreateKey( unsigned long long passhash );
-		static CryptBuffer^ CreateHeader( CryptKey^ key, CrypsFlags mod );
+		unsigned GetVersionNumber();
+		String^  GetVersionString();
+		void Init( bool init );
+
+		unsigned long long CalculateHash( array<unsigned char>^ data );
+		unsigned long long CalculateHash( String^ string );
+
+		CryptKey^ CreateKey( String^ password );
+		CryptKey^ CreateKey( unsigned long long ypshash );
+
+		CryptBuffer^ CreateHeader( CryptKey^ key, CrypsFlags mod );
+		        bool VerifyHeader( CryptKey^ key, CryptBuffer^ data, CrypsFlags mode );
+		        bool VerifyHeader( CryptKey^ key, CryptBuffer^ data );
+		        bool VerifyHeader( CryptKey^ key, String^ data );
 
 		generic<class T> where T : ValueType
-		static String^ EncryptW( CryptKey^ key, array<T>^ data );
+		String^ EncryptW( CryptKey^ key, array<T>^ data );
 		generic<class T>  where T : ValueType
-		static ArraySegment<byte> EncryptA( CryptKey^ key, array<T>^ data );
+		ArraySegment<byte> EncryptA( CryptKey^ key, array<T>^ data );
 		generic<class T> where T : ValueType
-		static ArraySegment<T> DecryptW( CryptKey^ key, String^ crypticWString );
+		ArraySegment<T> DecryptW( CryptKey^ key, String^ crypticWString );
 		generic<class T> where T : ValueType
-		static ArraySegment<T> DecryptA( CryptKey^ key, array<byte>^ crypticAString );
+		ArraySegment<T> DecryptA( CryptKey^ key, array<byte>^ crypticAString );
 
-		static bool    BeginDeString( CryptKey^ key, CryptBuffer^ crypticheader );
+		bool    BeginDeString( CryptKey^ key, CryptBuffer^ crypticheader );
 
-		static String^ DecryptString( CryptKey^ key, String^ crypt_string );
-		static String^ EncryptString( CryptKey^ key, String^ plain_string );
+		String^ DecryptString( CryptKey^ key, String^ crypt_string );
+		String^ EncryptString( CryptKey^ key, String^ plain_string );
 
-		static UInt32  EncryptFrame64( CryptKey^ key, UInt24 frame );
-		static UInt24  DecryptFrame64( CryptKey^ key, UInt32 frame );
+		UInt32  EncryptFrame64( CryptKey^ key, UInt24 frame );
+		UInt24  DecryptFrame64( CryptKey^ key, UInt32 frame );
 
 		generic<class T> where T : ValueType
-		static ArraySegment<T> BinaryEncrypt( CryptKey^ key, array<T>^ data );
+		ArraySegment<T> BinaryEncrypt( CryptKey^ key, array<T>^ data );
 		generic<class T> where T : ValueType
-		static ArraySegment<T> BinaryDecrypt( CryptKey^ key, array<T>^ cryp );
+		ArraySegment<T> BinaryDecrypt( CryptKey^ key, array<T>^ cryp );
 
-		static CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data ) { return Encrypt24( key, data, true ); }
-		static CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete );
+		CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data ) { return Encrypt24( key, data, true ); }
+		CryptBuffer^ Encrypt24( CryptKey^ key, CryptBuffer^ data, bool complete );
 		
-		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata );
-		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata, bool checkHeader );
-		static int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticheader, CryptBuffer^ crypticData );
+		int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata );
+		int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticdata, bool checkHeader );
+		int  Decrypt24( CryptKey^ key, CryptBuffer^ crypticheader, CryptBuffer^ crypticData );
 
-		static UInt24 EncryptFrame24( CryptKey^ key, UInt24 frame );
-		static UInt24 DecryptFrame24( CryptKey^ key, UInt24 frame );
+		UInt24 EncryptFrame24( CryptKey^ key, UInt24 frame );
+		UInt24 DecryptFrame24( CryptKey^ key, UInt24 frame );
 
-		static int EncryptFile( CryptKey^ key, System::IO::FileInfo^ src );
-		static int DecryptFile( CryptKey^ key, System::IO::FileInfo^ src );
+		int EncryptFile( CryptKey^ key, System::IO::FileInfo^ src );
+		int DecryptFile( CryptKey^ key, System::IO::FileInfo^ src );
 
-		static property Yps::Error Error { Yps::Error get(void); };
+		property Yps::Error Error { Yps::Error get(void); };
 	};
 }
 

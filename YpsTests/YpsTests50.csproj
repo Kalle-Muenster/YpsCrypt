@@ -7,8 +7,8 @@
     <Platforms>AnyCPU;x64;x86</Platforms>
     <PackageId>Yps.Crypt</PackageId>
     <Version>0.0.0.2</Version>
-    <Authors>YpsCryps</Authors>
-    <Product>YpsCryps</Product>
+    <Authors>YpsCrypt</Authors>
+    <Product>YpsCrypt</Product>
     <Company />
     <Description>Encyption/Decryption  Library</Description>
     <PackageIcon>YpsCrypt.png</PackageIcon>
@@ -84,6 +84,21 @@
     </None>
     <None Include="Program.cs" />
     <None Include="Properties\AssemblyInfo.cs" />
+	<None Include="$(ConsolaBinRoot)\$(PlatformTarget)\$(Configuration)\Consola.dll">
+	    <Pack>True</Pack>
+		<PackagePath>\</PackagePath>
+		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</None>
+	<None Include="$(OutDir)\YpsCrypt.dll">
+		<Pack>True</Pack>
+		<PackagePath>\</PackagePath>
+		<CopyToOutputDirectory>Always</CopyToOutputDirectory> 
+	</None>
+	<None Include="$(Int24TypesBinRoot)\$(PlatformTarget)\$(Configuration)\Int24Types.dll">
+		<Pack>True</Pack>
+		<PackagePath>\</PackagePath>
+		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</None>
   </ItemGroup>
 
   <ItemGroup>

@@ -19,10 +19,11 @@ Yps::Error::Error( uint eCode )
 }
 
 Yps::Error::Error( uint eCode, const char* eText )
-    : code(eCode)
-    , text(String::Format( "{0} Error: {1}",
-           gcnew String(eText),
-           GetText(eCode))) {
+    : code(eCode) {
+    String^ txt = gcnew String(eText);
+    String^ val = gcnew String("format");
+    if ( txt->Contains(val) ) code = FORMAT_ERROR;
+    text = String::Format( "{0} Error: {1}", txt, GetText(code) );
 }
 
 Yps::Error::Error( uint eCode, const char* eText, unsigned ePosition )
@@ -310,7 +311,7 @@ Yps::CryptKey::Equals( String^ phrase )
     if (phrase == nullptr) return false;
     if (phrase == String::Empty) return false;
     return crypt64_getHashFromKey( static_cast<K64*>(k.ToPointer()) )
-        == Crypt::CalculateHash( phrase );
+        == Crypt::Api->CalculateHash( phrase );
 }
 
 Yps::CryptKey::~CryptKey( void )
@@ -392,7 +393,7 @@ String^
 Yps::CryptKey::Encrypt( String^ string )
 {
     return IsValid()
-         ? Crypt::EncryptString( this, string )
+         ? Crypt::Api->EncryptString( this, string )
          : string;
 }
 
@@ -400,7 +401,7 @@ String^
 Yps::CryptKey::Decrypt( String^ crypts )
 {
     return IsValid()
-         ? Crypt::DecryptString( this, crypts )
+         ? Crypt::Api->DecryptString( this, crypts )
          : crypts;
 }
 
