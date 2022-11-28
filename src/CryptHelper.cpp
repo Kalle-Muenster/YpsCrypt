@@ -273,34 +273,34 @@ Yps::CryptKey::CryptKey( const char* phrase )
 
 Yps::CryptKey::CryptKey( ulong hash )
 {
-    if (hash > 0) k = IntPtr(crypt64_createKeyFromHash(hash));
+    if (hash > 0) k = IntPtr( crypt64_createKeyFromHash( hash ) );
 }
 
 ulong
-Yps::CryptKey::Hash::get(void) {
-    return crypt64_getHashFromKey(static_cast<K64*>(k.ToPointer()));
+Yps::CryptKey::Hash::get( void ) {
+    return crypt64_getHashFromKey( static_cast<K64*>( k.ToPointer() ) );
 }
 
 bool
-Yps::CryptKey::IsValid(void)
+Yps::CryptKey::IsValid( void )
 {
     bool valid = k != IntPtr::Zero;
-    if (valid) valid = Hash > 0;
-    if (valid) valid = crypt64_isValidKey(static_cast<K64*>(k.ToPointer())) > 0;
+    if ( valid ) valid = Hash > 0;
+    if ( valid ) valid = crypt64_isValidKey( static_cast<K64*>( k.ToPointer() ) ) > 0;
     return valid;
 }
 
 void
 Yps::CryptKey::dispose( bool disposing )
 {
-    if (disposing) {
+    if( disposing ) {
         d = true;
         if (hdr != nullptr)
             hdr->~CryptBuffer();
         hdr = nullptr;
-        K64* key = static_cast<K64*>(k.ToPointer());
-        crypt64_invalidateKey(key);
-        k = IntPtr(reinterpret_cast<void*>(junk_drop(key)));
+        K64* key = static_cast<K64*>( k.ToPointer() );
+        crypt64_invalidateKey( key );
+        k = IntPtr( reinterpret_cast<void*>( junk_drop( key ) ) );
         junk_cycle();
     }
 }
@@ -308,10 +308,11 @@ Yps::CryptKey::dispose( bool disposing )
 bool
 Yps::CryptKey::Equals( String^ phrase )
 {
-    if (phrase == nullptr) return false;
-    if (phrase == String::Empty) return false;
-    return crypt64_getHashFromKey( static_cast<K64*>(k.ToPointer()) )
-        == Crypt::Api->CalculateHash( phrase );
+    bool invalid = !IsValid();
+    if ( (phrase == nullptr) || (phrase == String::Empty) ) return invalid;
+    if ( invalid ) return false;
+    return Crypt::Api->CalculateHash( phrase )
+        == crypt64_getHashFromKey( static_cast<K64*>( k.ToPointer() ) );
 }
 
 Yps::CryptKey::~CryptKey( void )

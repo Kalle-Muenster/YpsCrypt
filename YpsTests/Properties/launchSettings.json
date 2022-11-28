@@ -2,7 +2,7 @@
   "profiles": {
     "YpsCryps": {
       "commandName": "Project",
-      "commandLineArgs": "--verbose",
+      "commandLineArgs": "--verbose --xmllogs --timelog",
       "workingDirectory": "$(OutDir)",
       "nativeDebugging": true
     }

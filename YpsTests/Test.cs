@@ -17,10 +17,12 @@ if( Args.Contains("-h")
     stream.Put("\nTest result options:\n    ")
         .Put("--verbose, -v    -    generate ")
         .Put("more detailed result log which ")
-        .Put("also contains PASS results\n    ")
+        .Put("also contains all PASS results\n    ")
         .Put("--xmllogs, -x    -    generate ")
-        .Put("test results as an xml document")
-    .Put("\n").End();
+        .Put("xml test results\n    ")
+        .Put("--timelog, -t    -    timestamp")
+        .Put(" all log entries\n")
+    .End();
     return 0;
 }
 
@@ -34,9 +36,10 @@ StdStream.Init(
 
 Test test = new CrypsTests(
     Args.Contains("-v") || Args.Contains("--verbose"),
-    Args.Contains("-x") || Args.Contains("--xmllogs")
+    Args.Contains("-x") || Args.Contains("--xmllogs"),
+    Args.Contains("-t") || Args.Contains("--timelog")
 ).Run();
 
-return test.wasErrors() ? -1
+return test.hasCrashed() ? -1
      : test.hasPassed() ?  0
      : test.getFailures();

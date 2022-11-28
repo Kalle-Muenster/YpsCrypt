@@ -58,6 +58,7 @@ namespace Yps
 	{
 	private:
 
+		const static Object^ Null;
 		IntPtr k;
 		bool   d;
 		void   dispose( bool disposing );
@@ -69,7 +70,10 @@ namespace Yps
 		CryptKey(unsigned long long hashval);
 		~CryptKey(void);
 		void* ToPointer(void);
-		bool Equals(String^ phrase);
+		bool Equals( String^ phrase );
+		bool Equals( const Object^ unknown ) {
+			return Equals( const_cast<Object^>( unknown ) );
+		}
 		CryptBuffer^ currentHdr(void);
 		CryptBuffer^ currentHdr(array<UInt24>^ set);
 		CryptBuffer^ currentHdr(CryptBuffer^ set);
@@ -77,7 +81,7 @@ namespace Yps
 
 	public:
 
-		const static CryptKey^ InvalidKey = gcnew CryptKey(unsigned long long int(0));
+		const static CryptKey^ InvalidKey = gcnew CryptKey( unsigned long long int(0) );
 
 		virtual bool IsValid( void );
 		property unsigned long long Hash {
@@ -87,23 +91,26 @@ namespace Yps
 			if ( That ) return this->Hash == That->Hash;
 			else return false;
 		}
-		virtual bool Equals( Object^ unknown ) override {
+		virtual bool Equals( Object^ unknown ) override { 
 			if ( unknown == nullptr ) return false;
 			if ( unknown->GetType() == CryptKey::typeid ) {
 				return this->Hash
 				    == safe_cast<CryptKey^>( unknown )->Hash;
+			} else if ( unknown->GetType() == String::typeid ) {
+				this->Equals( safe_cast<String^>( unknown ) );
 			} return false;
 		}
 
 		static bool operator ==( CryptKey^ This, CryptKey^ That ) {
-			Object^ nulli = nullptr;
-			if ( This->Equals( nulli ) ) return ( That->Equals( nulli ) ) ? true : false;
-			if ( That->Equals( nulli ) ) return ( This->Equals( nulli ) ) ? true : false;
+			if ( Object::Equals( safe_cast<Object^>( This ), const_cast<Object^>( Null ) ) )
+				return Object::Equals( safe_cast<Object^>( That ), const_cast<Object^>( Null ) );
+			if ( Object::Equals( safe_cast<Object^>( That ), const_cast<Object^>( Null ) ) )
+				return Object::Equals( safe_cast<Object^>( This ), const_cast<Object^>( Null ) );
 			return This->Hash == That->Hash;
 		}
 
 		static bool operator !=( CryptKey^ This, CryptKey^ That ) {
-			return !(operator==(This, That));
+			return !(operator==( This, That ));
 		}
 
 		String^ Encrypt( String^ string );

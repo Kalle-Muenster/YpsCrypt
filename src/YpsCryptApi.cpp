@@ -226,10 +226,12 @@ Yps::Crypt::BinaryEncrypt( CryptKey^ key, array<T>^ Src )
 {
     if( fail() ) return ArraySegment<T>();
     const int size_src = Src->Length * sizeof(T);
-    array<T>^ Dst = gcnew array<T>( (size_src + 12) / sizeof(T) );
+    uint size = ((size_src + 12) / sizeof(T));
+    const int size_dst = size + ((3 - (size % 3)) % 3);
+    array<T>^ Dst = gcnew array<T>( size_dst );
     pin_ptr<T> dst( &Dst[0] );
     pin_ptr<T> src( &Src[0] );
-    uint size = crypt64_binary_encrypt(
+    size = crypt64_binary_encrypt(
         static_cast<K64*>(key->ToPointer()),
         reinterpret_cast<const byte*>(src),
         size_src, reinterpret_cast<byte*>(dst) );

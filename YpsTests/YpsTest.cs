@@ -34,14 +34,15 @@ namespace Yps
             bytesize = testdata.Length;
         }
 
-        public CrypsTests( bool verbose, bool xml ) 
-            : base( verbose, xml )
+        public CrypsTests( bool logall, bool xmllog, bool timestamps ) 
+            : base( logall, xmllog, timestamps )
         {
             AddTestCase("CryptBufferStruct", cryptingBuffer);
             AddTestCase("Base64Encoding", base64encoding, true);
             AddTestCase("Base64Decoding", base64decoding, false);
 
             AddTestCase("CryptKeyCreation", creatingKey);
+            AddTestCase("CryptKeyOperators", keyOperators);
 
             AddTestCase("StringEncrypting", encryptingStrings, true);
             AddTestCase("StringDecrypting", decryptingStrings, false);
@@ -160,11 +161,11 @@ namespace Yps
 
         private void cryptingBuffer()
         {
-            InfoStep("Creating a new CryptBuffer of {0} bytes length", 50);
+            StepInfo("Creating a new CryptBuffer of {0} bytes length", 50);
             dat = new CryptBuffer( 50 );
             CheckStep( dat.Length >= 50, "Created CryptBuffer has matching length {0} byte", 50 );
 
-            InfoStep( "Exchange CryptBuffer data against an existing buffer array" );
+            StepInfo( "Exchange CryptBuffer data against an existing buffer array" );
             dat.SetData( bytesbin );
             CheckStep( dat.Length >= bytesbin.Length, "CryptBuffer shows up matching length of {0} bytes", bytesbin.Length );
 
@@ -222,6 +223,24 @@ namespace Yps
             keypassa = key2;
         }
 
+        protected void keyOperators()
+        {
+           
+            CryptKey nullptr = null;
+            bool result = nullptr == null;
+            CheckStep( result, "CryptKey::operator==( nullptr, nullptr ) returns {0}", result );
+            result = keypassa != null;
+            CheckStep( result, "CryptKey::operator!=( validkey, nullptr ) returns {0}", result );
+            result = null != keypassa;
+            CheckStep( result, "CryptKey::operator!=( nullptr, validkey ) returns {0}", result );
+            result = keypassa.VerifyPhrase( password );
+            CheckStep( result, "CryptKey.VerifyPhrase( matchingPhrase ) returns {0}", result );
+            result = keypassa.VerifyPhrase( "BananaBent" );
+            CheckStep( !result, "CryptKey.VerifyPhrase( wrongPhrase ) returns {0}", result );
+            result = keypassa == nullptr;
+            CheckStep( !result, "CryptKey::operator==( validvar, nullvar ) returns {0}", result );
+        }
+
         protected void failingKeys()
         {
             b64crypt = keypassa.Encrypt( testdata );
@@ -248,15 +267,15 @@ namespace Yps
 
         protected void cryptingErrors()
         {
-            InfoStep( "Decrypting by wrong Key" );
+            StepInfo( "Decrypting by wrong Key" );
             failingKeys();
-            InfoStep( "Decrypting by wrong Format" );
+            StepInfo( "Decrypting by wrong Format" );
             mistakingFormat();
         }
 
         protected void verifyingHeaders()
         {
-            InfoStep("Header Verification");
+            StepInfo("Header Verification");
             Rectangle[] rectangles = new Rectangle[4] {
                 new Rectangle(0,0,10,20),
                 new Rectangle(80,180,1000,7),
@@ -366,7 +385,7 @@ namespace Yps
             // try directly decrypting cryptic data (means not returning a plaintext copy
             // but instead decrypting that cryptic data within the containing buffer itself)
 
-            InfoStep("For testing direct decryption on a buffer, the cryptic\n             testdata output from Encrypt24 testcase is reused");
+            StepInfo("For testing direct decryption on a buffer, the cryptic\n             testdata output from Encrypt24 testcase is reused");
 
             uint probingPosition = 6;
             UInt24 differentVor = dat[probingPosition];
@@ -441,7 +460,7 @@ namespace Yps
                 if (cryptical[i] == cleartext[i]) ++equals;
             } if (equals > 3) FailStep( "prepared testdata contains too many equal chars {0}", equals );
             else {
-                InfoStep( "encrypted string:\n             {0}", cleartext );
+                StepInfo( "encrypted string:\n             {0}", cleartext );
             }
             
 
@@ -497,7 +516,7 @@ namespace Yps
             }
         }
 
-        protected override void TestSuite()
+        protected override void OnStartUp()
         {
             printVersionNumber();
             setTestData(
