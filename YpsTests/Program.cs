@@ -19,7 +19,9 @@ namespace Yps
                  args.Contains("--verbose") 
                      || args.Contains("-v"),
                  args.Contains("--xmllogs")
-                     || args.Contains("-x")
+                     || args.Contains("-x"),
+                 args.Contains("--timelog")
+                     || args.Contains("-t")
             ).Run().getFailures();
         }
     }
