@@ -71,7 +71,7 @@ namespace Yps
         private void encryptStreams()
         {
             // create an Yps.FileStream opened for writing plain data into it 
-            FileStream stream = new FileStream( keypassa, "FileStreamTest.yps", Stream.Flags.OpenWrite );
+            FileStream stream = new FileStream( Crypt.Api, keypassa, "FileStreamTest.yps", Stream.Flags.OpenWrite );
 
             // and write some clear text testdata into that stream
             byte[] cleartext = Encoding.Default.GetBytes( testdata );
@@ -87,7 +87,7 @@ namespace Yps
         private void decryptStreams()
         {
             // create an Yps.FileStream from a cryptic file for reading data from it
-            FileStream file = new FileStream( keypassa, "FileStreamTest.yps", Stream.Flags.OpenRead );
+            FileStream file = new FileStream( Crypt.Api, keypassa, "FileStreamTest.yps", Stream.Flags.OpenRead );
 
             // pass the opened file stream to constructing a TextWriter 
             System.IO.TextReader reader = new System.IO.StreamReader( file );
@@ -392,7 +392,8 @@ namespace Yps
 
             // apply decryption on the testcase befores output buffer which contains cryptic data 
             int size = Crypt.Api.Decrypt24( keypassa, hdr, dat );
-            keypassa.Release();
+            keypassa.Release( Crypt.Api );
+
             UInt24 differentNach = dat[probingPosition];
             
             if( differentVor != differentNach )
@@ -509,7 +510,7 @@ namespace Yps
 
         public void deInitialization()
         {
-            try{ Crypt.Api.Init( false );
+            try{ Crypt.DeInit();
                 PassStep( "De-Initialization caused no errors" );
             } catch( Exception ex ) {
                 FailStep( "De-Initialization caused crash: {0}", ex.Message );

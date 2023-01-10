@@ -18,28 +18,37 @@ namespace Yps {
 	ref class CryptKey;
 	ref class CryptBuffer;
 
-	public ref class Crypt
+	public ref class Crypt : IDisposable
 	{
 	private:
 		static Crypt^        inst;
 		static volatile bool runs;
+		IntPtr               ypse;
 		bool check( unsigned size );
 		bool fail();
+		Crypt( void );
+		Crypt( IntPtr statePtr );
+		bool checkKeyContext( void* s, void* k );
 
 	internal:
 		Error error;
 		bool chkHeader24( CryptKey^ key, CryptBuffer^ hdr );
 		bool useHeader24( CryptKey^ key, CryptBuffer^ hdr );
 		void headerDtorFunc( IntPtr data );
+		void Init( bool init );
+		property IntPtr Ypse { IntPtr get(void); }
 
 	public:
 		static Crypt();
-
+		static void DeInit();
 		static property Crypt^ Api { Crypt^ get(void); }
+		static Crypt^ CreateContext( void );
+		
+		virtual ~Crypt();
 
 		unsigned GetVersionNumber();
 		String^  GetVersionString();
-		void Init( bool init );
+		
 
 		unsigned long long CalculateHash( array<unsigned char>^ data );
 		unsigned long long CalculateHash( String^ string );

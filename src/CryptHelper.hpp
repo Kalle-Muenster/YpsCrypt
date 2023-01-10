@@ -53,6 +53,7 @@ namespace Yps
 		}
 	};
 
+	ref class Crypt;
 	public ref class CryptKey
 		: public IDisposable
 	{
@@ -116,8 +117,8 @@ namespace Yps
 		String^ Encrypt( String^ string );
 		String^ Decrypt( String^ crypts );
 
-		void RemoveContext( void );
-		bool Release( void );
+		void RemoveContext( Crypt^ ctx );
+		bool Release( Crypt^ ctx );
 		bool VerifyPhrase( String^ phrase ) {
 			return Equals( phrase );
 		}

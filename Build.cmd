@@ -8,8 +8,8 @@ set _here_=%CD%
 set _root_=%CD%
 
 :: Set VersionNumber
-set YpsCryptVersionNumber=00000002
-set YpsCryptVersionString=0.0.0.2
+set YpsCryptVersionNumber=00000003
+set YpsCryptVersionString=0.0.0.3
 
 if "%DotNetVersionString%"=="dot48" set DotNetVersionNumber=48
 if "%DotNetVersionString%"=="dot60" set DotNetVersionNumber=60

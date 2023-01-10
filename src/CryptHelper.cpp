@@ -115,7 +115,7 @@ Yps::Base64::fail(void)
 
 
 void
-Yps::Base64::Init(bool init)
+Yps::Base64::Init( bool init )
 {
     if (init) {
         QuickCommandInit();
@@ -268,7 +268,7 @@ Yps::Base64::DecodeString( String^ data )
 
 Yps::CryptKey::CryptKey( const char* phrase )
 {
-    if (phrase != NULL) if (phrase[0] != '\0') k = IntPtr(crypt64_createKeyFromPass(phrase));
+    if (phrase != NULL) if (phrase[0] != '\0') k = IntPtr( crypt64_createKeyFromPass(phrase) );
 }
 
 Yps::CryptKey::CryptKey( ulong hash )
@@ -327,16 +327,16 @@ Yps::CryptKey::ToPointer( void )
 }
 
 void
-Yps::CryptKey::RemoveContext( void )
+Yps::CryptKey::RemoveContext( Crypt^ cryp )
 {
-    if ( crypt64_releaseContext( (K64*)k.ToPointer() ) )
+    if ( crypt64_releaseContext( (K64*)k.ToPointer(), (k64State*)cryp->Ypse.ToPointer() ) )
         clearAllErrors();
 }
 
 bool
-Yps::CryptKey::Release( void )
+Yps::CryptKey::Release( Crypt^ cryp )
 {
-    bool contextcleared = crypt64_releaseContext( (K64*)k.ToPointer() );
+    bool contextcleared = crypt64_releaseContext( (K64*)k.ToPointer(), (k64State*)cryp->Ypse.ToPointer() );
     if (!contextcleared) setError( "context", CONTXT_ERROR );
     return contextcleared;
 }
@@ -380,7 +380,7 @@ Yps::CryptKey::currentHdr( array<UInt24>^ set )
     if (set != nullptr) {
         if (hdr == nullptr)
             hdr = gcnew CryptBuffer(set);
-        else hdr->SetData(set);
+        else hdr->SetData( set );
     } return hdr;
 }
 

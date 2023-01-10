@@ -340,37 +340,44 @@ Yps::CryptBuffer::Length::set( slong val )
 	Type = t;
 }
 
-Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ key, int oset )
-	: CrypticEnumerator<UInt32,UInt24>(init, key, oset)
+Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ key, int oset )
+	: CrypticEnumerator<UInt32,UInt24>(init, key, oset, yptic)
 {
 	bool header = false;
-	if ( header = Crypt::Api->BeginDeString( key, key->currentHdr() ) ) {
+	if ( header = api->BeginDeString( key, key->currentHdr() ) ) {
 		CryptBuffer^ hdrdata = gcnew CryptBuffer( key->currentHdr()->GetCopy<UInt32>() );
-		if( key->Release() ) {
-		    if(!Crypt::Api->BeginDeString( key, init ) ) {
-			    key->RemoveContext();
-			    Crypt::Api->BeginDeString( key, hdrdata );
+		if( key->Release( api ) ) {
+		    if(!api->BeginDeString( key, init ) ) {
+			    key->RemoveContext( api );
+			    api->BeginDeString( key, hdrdata );
 			    header = false;
 			}
 		}
-	} else if ( !( header = Crypt::Api->BeginDeString( key, init ) ) ) {
-		key->RemoveContext();
+	} else if ( !( header = api->BeginDeString( key, init ) ) ) {
+		key->RemoveContext( api );
 	} if( header ) {
 		start += 4;
 		stopt -= 4;
 	} current += (start * 4);
 	init->Type = UInt32::typeid;
 }
+Yps::CryptBuffer::OuterCrypticStringEnumerator::OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ key, int oset )
+	: OuterCrypticStringEnumerator( Crypt::Api, init, key, oset )
+{}
+
 
 // -- inner cryptic string enumerator -- //
 
-Yps::CryptBuffer::InnerCrypticStringEnumerator::InnerCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
-	: CrypticEnumerator<UInt24,CryptFrame>( init, use, oset )
+Yps::CryptBuffer::InnerCrypticStringEnumerator::InnerCrypticStringEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset )
+	: CrypticEnumerator<UInt24,CryptFrame>( init, use, oset, yptic )
 {
 	current += (start * 3);
-	Crypt::Api->CreateHeader( use, CrypsFlags::Base64 );
+	api->CreateHeader( use, CrypsFlags::Base64 );
 	init->Type = UInt24::typeid;
 }
+Yps::CryptBuffer::InnerCrypticStringEnumerator::InnerCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ key, int oset )
+	: InnerCrypticStringEnumerator( Crypt::Api, init, key, oset )
+{}
 
 Yps::CryptBuffer::InnerCrypticStringEnumerator^
 Yps::CryptBuffer::GetInnerCrypticStringEnumerator( CryptKey^ use, int offset )
@@ -381,14 +388,14 @@ Yps::CryptBuffer::GetInnerCrypticStringEnumerator( CryptKey^ use, int offset )
 Yps::CryptFrame
 Yps::CryptBuffer::InnerCrypticStringEnumerator::Current::get(void)
 {
-	frame.b64 = Crypt::Api->EncryptFrame64( key, *( (UInt24*)current.ToPointer() + position ) );
+	frame.b64 = api->EncryptFrame64( key, *( (UInt24*)current.ToPointer() + position ) );
 	return frame;
 }
 
 void 
 Yps::CryptBuffer::InnerCrypticStringEnumerator::Current::set( CryptFrame value )
 {
-	*((UInt24*)current.ToPointer() + position) = Crypt::Api->DecryptFrame64( key, value.b64 );
+	*((UInt24*)current.ToPointer() + position) = api->DecryptFrame64( key, value.b64 );
 }
 
 
@@ -403,25 +410,28 @@ Yps::CryptBuffer::GetOuterCrypticStringEnumerator(CryptKey^ use, int offset)
 UInt24
 Yps::CryptBuffer::OuterCrypticStringEnumerator::Current::get(void)
 {
-	return Crypt::Api->DecryptFrame64(key, *((UInt32*)current.ToPointer() + position));
+	return api->DecryptFrame64(key, *((UInt32*)current.ToPointer() + position));
 }
 
 void
 Yps::CryptBuffer::OuterCrypticStringEnumerator::Current::set(UInt24 value)
 {
-	*((UInt32*)current.ToPointer() + position) = Crypt::Api->EncryptFrame64(key, value);
+	*((UInt32*)current.ToPointer() + position) = api->EncryptFrame64(key, value);
 }
 
 
 // -- inner cryptic binar enumerator -- //
 
-Yps::CryptBuffer::InnerCrypticEnumerator::InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
-	: CrypticEnumerator<UInt24,UInt24>( init, use, oset )
+Yps::CryptBuffer::InnerCrypticEnumerator::InnerCrypticEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset )
+	: CrypticEnumerator<UInt24,UInt24>( init, use, oset, yptic )
 {
 	current += (start * 3);
-	Crypt::Api->CreateHeader( use, CrypsFlags::Binary );
+	api->CreateHeader( use, CrypsFlags::Binary );
 	init->Type = UInt24::typeid;
 }
+Yps::CryptBuffer::InnerCrypticEnumerator::InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
+	: InnerCrypticEnumerator( Crypt::Api, init, use, oset )
+{}
 
 Yps::CryptBuffer::InnerCrypticEnumerator^
 Yps::CryptBuffer::GetInnerCrypticEnumerator(CryptKey^ use, int offset)
@@ -432,24 +442,27 @@ Yps::CryptBuffer::GetInnerCrypticEnumerator(CryptKey^ use, int offset)
 UInt24
 Yps::CryptBuffer::InnerCrypticEnumerator::Current::get(void)
 {
-	return Crypt::Api->EncryptFrame24( key, *((UInt24*)current.ToPointer() + position) );
+	return api->EncryptFrame24( key, *((UInt24*)current.ToPointer() + position) );
 }
 
 void
 Yps::CryptBuffer::InnerCrypticEnumerator::Current::set(UInt24 value)
 {
-	*((UInt24*)current.ToPointer() + position) = Crypt::Api->DecryptFrame24(key, value);
+	*((UInt24*)current.ToPointer() + position) = api->DecryptFrame24(key, value);
 }
 
 
 // -- outer cryptic binar enumerator -- //
 
-Yps::CryptBuffer::OuterCrypticEnumerator::OuterCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
-	: CrypticEnumerator<UInt24,UInt24>( init, use, oset )
+Yps::CryptBuffer::OuterCrypticEnumerator::OuterCrypticEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset )
+	: CrypticEnumerator<UInt24,UInt24>( init, use, oset, yptic )
 {
-	if( !Crypt::Api->chkHeader24( use, use->currentHdr() ) )
+	if( !api->chkHeader24( use, use->currentHdr() ) )
 		throw gcnew Exception("invalid key");
 }
+Yps::CryptBuffer::OuterCrypticEnumerator::OuterCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset )
+	: OuterCrypticEnumerator( Crypt::Api, init, use, oset )
+{}
 
 Yps::CryptBuffer::OuterCrypticEnumerator^
 Yps::CryptBuffer::GetOuterCrypticEnumerator( CryptKey^ use, int offset )
@@ -460,12 +473,35 @@ Yps::CryptBuffer::GetOuterCrypticEnumerator( CryptKey^ use, int offset )
 UInt24
 Yps::CryptBuffer::OuterCrypticEnumerator::Current::get( void )
 {
-	return Crypt::Api->DecryptFrame24( key, *( (UInt24*)current.ToPointer() + position ) );
+	return api->DecryptFrame24( key, *( (UInt24*)current.ToPointer() + position ) );
 }
 
 void
 Yps::CryptBuffer::OuterCrypticEnumerator::Current::set( UInt24 value )
 {
-	*((UInt24*)current.ToPointer() + position) = Crypt::Api->EncryptFrame24( key, value );
+	*((UInt24*)current.ToPointer() + position) = api->EncryptFrame24( key, value );
 }
 
+Yps::CryptBuffer::InnerCrypticEnumerator^
+Yps::CryptBuffer::GetInnerCrypticEnumerator( Crypt^ yps, CryptKey^ use, int offset )
+{
+	return gcnew InnerCrypticEnumerator( yps, this, use, offset );
+}
+
+Yps::CryptBuffer::OuterCrypticEnumerator^
+Yps::CryptBuffer::GetOuterCrypticEnumerator(Crypt^ yps, CryptKey^ use, int offset)
+{
+	return gcnew OuterCrypticEnumerator( yps, this, use, offset );
+}
+
+Yps::CryptBuffer::InnerCrypticStringEnumerator^
+Yps::CryptBuffer::GetInnerCrypticStringEnumerator( Crypt^ yps, CryptKey^ use, int offset )
+{
+	return gcnew InnerCrypticStringEnumerator( yps, this, use, offset );
+}
+
+Yps::CryptBuffer::OuterCrypticStringEnumerator^
+Yps::CryptBuffer::GetOuterCrypticStringEnumerator( Crypt^ yps, CryptKey^ use, int offset )
+{
+	return gcnew OuterCrypticStringEnumerator( yps, this, use, offset );
+}

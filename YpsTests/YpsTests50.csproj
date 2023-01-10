@@ -6,7 +6,7 @@
     <ApplicationIcon>obstacle.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <PackageId>Yps.Crypt</PackageId>
-    <Version>0.0.0.2</Version>
+    <Version>0.0.3</Version>
     <Authors>YpsCrypt</Authors>
     <Product>YpsCrypt</Product>
     <Company />
@@ -20,11 +20,11 @@
     <Nullable>disable</Nullable>
     <DebugType>full</DebugType>
     <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
-    <AssemblyVersion>0.0.2</AssemblyVersion>
+    <AssemblyVersion>0.0.0.3</AssemblyVersion>
     <StartupObject></StartupObject>
     <BaseOutputPath>..\bin\core5\</BaseOutputPath>
     <AssemblyName>YpsTests</AssemblyName>
-    <FileVersion>0.0.2</FileVersion>
+    <FileVersion>0.0.0.3</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

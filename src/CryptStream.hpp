@@ -23,7 +23,7 @@ namespace Yps {
             OpenRead = 0x01, OpenWrite = 0x02, Encrypt = 0x04, Decrypt = 0x08
         };
 
-        Stream( CryptKey^ pass, Flags flags );
+        Stream( Crypt^ ypse, CryptKey^ pass, Flags flags );
 
         virtual property bool CanRead {
             bool get(void) override { return flags.HasFlag( Flags::OpenRead ); }
@@ -38,6 +38,7 @@ namespace Yps {
         virtual UInt24 GetFrame( void ) abstract;
 
     protected:
+        Crypt^       state;
         CryptKey^    crypt;
         Flags        flags;
         int          bytes;
@@ -56,7 +57,7 @@ namespace Yps {
     {
     public:
 
-        FileStream( CryptKey^ pass, String^ path, Flags mode );
+        FileStream( Crypt^ ypse, CryptKey^ pass, String^ path, Flags mode );
 
         virtual ~FileStream( void );
 
@@ -83,7 +84,7 @@ namespace Yps {
 
     private:
 
-        static IntPtr crypticFopen( CryptKey^ key, String^ nam, unsigned mod );
+        static IntPtr crypticFopen( IntPtr state, CryptKey^ key, String^ nam, unsigned mod );
         IntPtr  file;
     };
 
@@ -92,8 +93,8 @@ namespace Yps {
     {
     public:
 
-        MemoryStream( CryptKey^ pass, CryptBuffer^ store, Flags mode );
-        MemoryStream( CryptKey^ pass, uint size, Flags mode );
+        MemoryStream( Crypt^ ypse, CryptKey^ pass, CryptBuffer^ store, Flags mode );
+        MemoryStream( Crypt^ ypse, CryptKey^ pass, uint size, Flags mode );
 
         virtual ~MemoryStream( void );
 
@@ -126,7 +127,7 @@ namespace Yps {
         CryptBuffer::CrypticEnumerator<UInt24,UInt24>^ stream;
         CryptBuffer^                                   buffer;
 
-        void openStream( CryptKey^ pass );
+        void openStream( Crypt^ apistate, CryptKey^ pass );
     };
 
 } //end of Yps

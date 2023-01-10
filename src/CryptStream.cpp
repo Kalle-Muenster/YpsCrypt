@@ -16,7 +16,7 @@
 
 
 System::IntPtr
-Yps::FileStream::crypticFopen( CryptKey^ key, String^ nam, uint mod )
+Yps::FileStream::crypticFopen( IntPtr state, CryptKey^ key, String^ nam, uint mod )
 {
     array<wchar_t>^ strg = nam->ToCharArray();
     int len = strg->Length;
@@ -25,15 +25,17 @@ Yps::FileStream::crypticFopen( CryptKey^ key, String^ nam, uint mod )
         Path[i] = (char)strg[i];
     } Path[len] = '\0';
     pin_ptr<char> path = &Path[0];
-    return IntPtr( crypt64_createFileStream(
-        (K64*)key->ToPointer(), (const char*)path, (const char*)&mod
+    return IntPtr( crypt64_CreateFileStream( 
+        (k64State*)state.ToPointer(), (K64*)key->ToPointer(),
+        (const char*)path, (const char*)&mod
     ) );
 }
 
-Yps::Stream::Stream( CryptKey^ pass, Flags mode )
+Yps::Stream::Stream( Crypt^ ypse, CryptKey^ pass, Flags mode )
     : System::IO::Stream() {
     flags = mode;
     crypt = pass;
+    state = ypse;
     bytes = 0;
  }
 
@@ -65,8 +67,8 @@ Yps::Stream::LoadFrame( array<byte>^ data, int endo )
 }
 
 
-Yps::FileStream::FileStream( CryptKey^ pass, String^ path, Flags mode )
-    : Yps::Stream( pass, mode )
+Yps::FileStream::FileStream( Crypt^ cryps, CryptKey^ pass, String^ path, Flags mode )
+    : Yps::Stream( cryps, pass, mode )
 {
     if( !enum_utils::anyFlag( Flags::Decrypt|Flags::Encrypt, flags ) ) {
         if( enum_utils::hasFlag( flags, Flags::OpenWrite ) ) {
@@ -75,7 +77,7 @@ Yps::FileStream::FileStream( CryptKey^ pass, String^ path, Flags mode )
         } else {
             flags = enum_utils::operator|(flags, Flags::Decrypt|Flags::OpenRead);
         }
-    } file = crypticFopen(
+    } file = crypticFopen( state->Ypse,
          pass, path, flags.HasFlag( Flags::OpenWrite ) ? 6644343 : 6578802
                            );
 }
@@ -174,8 +176,8 @@ Yps::FileStream::Write( array<byte>^ buffer, int offset, int count )
     //}
 
     catchError( "invalid base64 data" );
-    if( wasError() ) { Crypt::Api->error = Error( (uint)getErrorCode(), getError() );
-        throw gcnew Exception( Crypt::Api->error.Text );
+    if( wasError() ) { state->error = Error( (uint)getErrorCode(), getError() );
+        throw gcnew Exception( state->error.Text );
     }
 }
 
@@ -185,8 +187,8 @@ Yps::FileStream::SizeCheckedWrite( array<byte>^ buffer, int byteOffset, int byte
     pin_ptr<byte> src( &buffer[byteOffset] );
     byteCount = (int)crypt64_swrite( (byte*)src, 1u, (uint)byteCount, (K64F*)file.ToPointer() );
     catchError( "invalid base64 data" );
-    if( wasError() ) { Crypt::Api->error = Error( getErrorCode(), getError() );
-        throw gcnew Exception( Crypt::Api->error.Text );
+    if( wasError() ) { state->error = Error( getErrorCode(), getError() );
+        throw gcnew Exception( state->error.Text );
     } return byteCount;
 }
 
@@ -199,7 +201,7 @@ Yps::FileStream::PutFrame( UInt24 frame )
 UInt24
 Yps::FileStream::GetFrame( void )
 {
-    return reinterpret_cast<UInt24&>( crypt64_getYps( (K64F*)file.ToPointer() ).u32 );
+    return reinterpret_cast<UInt24&>( crypt64_getYps( (K64F*)file.ToPointer() ) );
 }
 
 void
@@ -242,24 +244,24 @@ Yps::FileStream::Position::set( slong value )
 // Yps::MomoryStream  /////////////////////////////////////////////////////////////////////////////
 
 
-Yps::MemoryStream::MemoryStream( Yps::CryptKey^ pass, CryptBuffer^ store, Yps::Stream::Flags mode )
-    : Yps::Stream::Stream( pass, flags )
+Yps::MemoryStream::MemoryStream( Yps::Crypt^ cryps, Yps::CryptKey^ pass, CryptBuffer^ store, Yps::Stream::Flags mode )
+    : Yps::Stream::Stream( cryps, pass, flags )
     , buffer( store ) {
-    openStream( pass );
+    openStream( cryps, pass );
 }
 
-Yps::MemoryStream::MemoryStream( Yps::CryptKey^ pass, uint size, Yps::Stream::Flags flags )
-    : MemoryStream( pass, gcnew CryptBuffer( gcnew array<byte>( size ) ), flags ) {
+Yps::MemoryStream::MemoryStream( Yps::Crypt^ cryps, Yps::CryptKey^ pass, uint size, Yps::Stream::Flags flags )
+    : MemoryStream( cryps, pass, gcnew CryptBuffer( gcnew array<byte>( size ) ), flags ) {
 }
 
 void
-Yps::MemoryStream::openStream( CryptKey^ pass )
+Yps::MemoryStream::openStream( Crypt^ ypse, CryptKey^ pass )
 {
     if( enum_utils::hasFlag( flags, Stream::Flags::Encrypt ) ) {
-        stream = buffer->GetOuterCrypticEnumerator( pass, 0 );
+        stream = buffer->GetOuterCrypticEnumerator( ypse, pass, 0 );
     } else
     if( enum_utils::hasFlag( flags, Stream::Flags::Decrypt ) ) {
-        stream = buffer->GetInnerCrypticEnumerator( pass, 0 );
+        stream = buffer->GetInnerCrypticEnumerator( ypse, pass, 0 );
     }
 }
 
@@ -369,9 +371,9 @@ Yps::MemoryStream::Write( array<byte>^ buffer, int offset, int count )
     if( bytes ) this->LoadFrame( buffer, offset + count );
 
     catchError("invalid base64 data");
-    if (wasError()) {
-        Crypt::Api->error = Error( (uint)getErrorCode(), getError() );
-        throw gcnew Exception( Crypt::Api->error.Text );
+    if( wasError() ) {
+        state->error = Error( (uint)getErrorCode(), getError() );
+        throw gcnew Exception( state->error.Text );
     }
 }
 
@@ -386,8 +388,8 @@ Yps::MemoryStream::SizeCheckedWrite( array<byte>^ buffer, int offset, int count 
     count *= 3;
     catchError("invalid base64 data");
     if( wasError() ) {
-        Crypt::Api->error = Error( getErrorCode(), getError() );
-        throw gcnew Exception( Crypt::Api->error.Text );
+        state->error = Error( getErrorCode(), getError() );
+        throw gcnew Exception( state->error.Text );
     } return count;
 }
 

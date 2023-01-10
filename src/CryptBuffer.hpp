@@ -58,18 +58,14 @@ namespace Yps
 		ref class Enumerator abstract
 		{
 		protected:
-
+			Crypt^       api;
 			int          start;
 			int          stopt;
 			int          position;
 			IntPtr       current;
 			
-			Enumerator( CryptBuffer^ instance, int offset ) {
-				start = offset;
-				stopt = instance->GetElements() - start;
-				current = instance->GetPointer();
-				position = -1;
-			}
+			Enumerator( CryptBuffer^ instance, int offset, Crypt^ yptic );
+			Enumerator( CryptBuffer^ instance, int offset );
 
 		public:
 
@@ -105,8 +101,8 @@ namespace Yps
 
 		protected:
 			CryptKey^    key;
-			CrypticEnumerator( CryptBuffer^ instance, CryptKey^ useKey, int offset )
-				: Enumerator<C>(instance,offset) {
+			CrypticEnumerator( CryptBuffer^ instance, CryptKey^ useKey, int offset, Crypt^ yptic )
+				: Enumerator<C>( instance, offset, yptic ) {
 				key = useKey;
 				start = offset;
 				stopt = instance->GetElements() - start;
@@ -115,7 +111,7 @@ namespace Yps
 			
 		public:
 			virtual ~CrypticEnumerator() {
-				key->Release();
+				key->Release( api );
 				if (current == IntPtr::Zero) return;
 				current = IntPtr::Zero;
 				position = -1;
@@ -123,7 +119,7 @@ namespace Yps
 				start = 0;
 			}
 			virtual void Reset( void ) override {
-				key->RemoveContext();
+				key->RemoveContext( api );
 				position = -1;
 			}
 			CryptBuffer^ GetHeader() {
@@ -154,7 +150,7 @@ namespace Yps
 		ref class UInt24Enumerator
 			: public Enumerator<UInt24>	{
 		public:
-			UInt24Enumerator(CryptBuffer^ init,int oset)
+			UInt24Enumerator( CryptBuffer^ init, int oset )
 			: Enumerator<UInt24>( init, oset ) {
 				current = IntPtr((UInt24*)current.ToPointer() + oset);
 				init->Type = UInt24::typeid;
@@ -174,9 +170,9 @@ namespace Yps
 		ref class Base64Enumerator
 			: public CryptBuffer::Enumerator<CryptFrame> {
 		public:
-			Base64Enumerator(CryptBuffer^ init, int oset)
-			: Enumerator<CryptFrame>(init, oset) {
-				current = IntPtr((CryptFrame*)current.ToPointer() + oset);
+			Base64Enumerator( CryptBuffer^ init, int oset )
+			: Enumerator<CryptFrame>( init, oset ) {
+				current = IntPtr( (CryptFrame*)current.ToPointer() + oset );
 				init->Type = CryptFrame::typeid;
 			}
 
@@ -194,8 +190,8 @@ namespace Yps
 		ref class InnerCrypticEnumerator
 			: public CrypticEnumerator<UInt24,UInt24> {
 		public:
+			InnerCrypticEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset );
 			InnerCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
-
 		public:
 			property UInt24 Current {
 				virtual UInt24 get(void) override;
@@ -208,6 +204,7 @@ namespace Yps
 		public:
 			IParser<UInt24>^ Search;
 
+			OuterCrypticEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset );
 			OuterCrypticEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
 			property UInt24 Current {
@@ -231,7 +228,8 @@ namespace Yps
 			CryptFrame frame;
 
 		public:
-			InnerCrypticStringEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
+			InnerCrypticStringEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset );
+			InnerCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
 		public:
 			property CryptFrame Current {
@@ -246,7 +244,8 @@ namespace Yps
 		public:
 			IParser<UInt24>^ Search;
 
-			OuterCrypticStringEnumerator(CryptBuffer^ init, CryptKey^ use, int oset);
+			OuterCrypticStringEnumerator( Crypt^ yptic, CryptBuffer^ init, CryptKey^ use, int oset );
+			OuterCrypticStringEnumerator( CryptBuffer^ init, CryptKey^ use, int oset );
 
 			property UInt24 Current {
 				virtual UInt24 get(void) override;
@@ -289,12 +288,17 @@ namespace Yps
 		virtual CrypticEnumerator<T,C>^ GetCrypticEnumerator( CryptKey^ use, CrypsFlags Mode );
 
 		generic<class T, class C> where T : ValueType where C : ValueType
-		virtual CrypticEnumerator<T, C>^ GetCrypticEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs );
+		virtual CrypticEnumerator<T,C>^ GetCrypticEnumerator( CryptKey^ use, CrypsFlags Mode, int offsetCs );
 
 		InnerCrypticEnumerator^ GetInnerCrypticEnumerator( CryptKey^ use, int offset );
 		OuterCrypticEnumerator^ GetOuterCrypticEnumerator( CryptKey^ use, int offset );
 		InnerCrypticStringEnumerator^ GetInnerCrypticStringEnumerator( CryptKey^ use, int offset );
 		OuterCrypticStringEnumerator^ GetOuterCrypticStringEnumerator( CryptKey^ use, int offset );
+
+		InnerCrypticEnumerator^ GetInnerCrypticEnumerator( Crypt^ yps, CryptKey^ use, int offset );
+		OuterCrypticEnumerator^ GetOuterCrypticEnumerator( Crypt^ yps, CryptKey^ use, int offset );
+		InnerCrypticStringEnumerator^ GetInnerCrypticStringEnumerator( Crypt^ yps, CryptKey^ use, int offset );
+		OuterCrypticStringEnumerator^ GetOuterCrypticStringEnumerator( Crypt^ yps, CryptKey^ use, int offset );
 
 		IntPtr GetPointer() {
 			return data;
