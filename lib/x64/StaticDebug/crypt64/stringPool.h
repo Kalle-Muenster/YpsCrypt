@@ -69,7 +69,7 @@ STRINGPOOL_API StringPool* POOL_VOIDCALL(InitializeCycle);
 STRINGPOOL_API StringPool* pool_InitializeCycle(void);
 #endif
 
-STRINGPOOL_API void       pool_setBottom(StringPool*);
+STRINGPOOL_API void        pool_setBottom(StringPool*);
 STRINGPOOL_API StringPool* pool_getBottom(void);
 
 #ifndef NO_CHECKPOINT_MODE
